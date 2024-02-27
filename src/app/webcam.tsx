@@ -12,6 +12,8 @@ import React from "react";
 import { CSSProperties } from "react";
 import { Box } from "@chakra-ui/react";
 import { HandLandmarker, FilesetResolver, HandLandmarkerResult } from "@mediapipe/tasks-vision";
+import { drawConnectors, drawLandmarks } from "@mediapipe/drawing_utils";
+import { HAND_CONNECTIONS } from "@mediapipe/hands";
 
 interface VideoBoxProps {
   height?: CSSProperties["height"];
@@ -53,7 +55,6 @@ function NoWebcamSelected({ height = "480px" }: { height?: CSSProperties["height
 
 // This function creates a new hand landmarker
 async function createHandLandmarker() {
-  console.log("Creating new hand landmarker");
   const vision = await FilesetResolver.forVisionTasks(
     "https://cdn.jsdelivr.net/npm/@mediapipe/tasks-vision@0.10.0/wasm"
   );
@@ -74,13 +75,16 @@ interface WebcamProps {
 
 export default function Webcam({ device, height = "480px" }: WebcamProps) {
   const [handLandmarker, setHandLandmarker] = React.useState<HandLandmarker | undefined>();
-  const [trackSettings, setTrackSettings] = React.useState<MediaTrackSettings | undefined>();
   const videoRef = React.useRef<HTMLVideoElement>(null);
   const canvasRef = React.useRef<HTMLCanvasElement>(null);
 
   // Create hand landmarker on load
   React.useEffect(() => {
-    createHandLandmarker().then(setHandLandmarker);
+    console.log("Creating hand landmarker");
+    createHandLandmarker().then((handLandmarker) => {
+      console.log("Hand landmarker created");
+      setHandLandmarker(handLandmarker);
+    });
   }, []);
 
   // Set video source to selected webcam
@@ -98,7 +102,6 @@ export default function Webcam({ device, height = "480px" }: WebcamProps) {
         if (videoRef.current) {
           videoRef.current.srcObject = stream;
           const settings = stream.getVideoTracks()[0].getSettings();
-          setTrackSettings(settings);
           canvasRef.current!.width = settings.width!;
           canvasRef.current!.height = settings.height!;
         }
@@ -107,6 +110,42 @@ export default function Webcam({ device, height = "480px" }: WebcamProps) {
         console.error("Error accessing the webcam", error);
       });
   }, [device]);
+
+  // Hand tracking loop
+  function track(start: number = performance.now()) {
+    if (!handLandmarker) return;
+
+    // console.log(start);
+    if (videoRef.current && !videoRef.current.paused && canvasRef.current) {
+      // Get landmarks
+      const results = handLandmarker.detectForVideo(videoRef.current, performance.now());
+
+      // Draw landmarks
+      const canvasCtx = canvasRef.current.getContext("2d");
+      if (!canvasCtx) {
+        console.error("Canvas context not found");
+        return;
+      }
+      canvasCtx.save();
+      canvasCtx.clearRect(0, 0, canvasRef.current.width, canvasRef.current.height);
+      for (const landmarks of results.landmarks) {
+        drawConnectors(canvasCtx, landmarks, HAND_CONNECTIONS, {
+          color: "#00FF00",
+          lineWidth: 5,
+        });
+        drawLandmarks(canvasCtx, landmarks, { color: "#FF0000", lineWidth: 2 });
+      }
+    }
+    requestAnimationFrame(() => track(start));
+  }
+
+  // Start hand tracking loop
+  React.useEffect(() => {
+    if (handLandmarker) {
+      console.log("Starting hand tracking loop");
+      track();
+    }
+  }, [handLandmarker]);
 
   if (device) {
     const width = videoRef.current?.videoWidth || 640;
