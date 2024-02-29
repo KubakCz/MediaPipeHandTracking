@@ -15,20 +15,31 @@ import fixWebmDuration from "fix-webm-duration";
 import Webcam from "./webcam";
 
 export default function App() {
-  const [devices, setDevices] = React.useState<MediaDeviceInfo[]>([]);
+  const [devices, setDevices] = React.useState<InputDeviceInfo[]>([]);
   const [selectedDevice, setSelectedDevice] = React.useState<MediaDeviceInfo | undefined>();
   const [videoRecorder, setVideoRecorder] = React.useState<MediaRecorder | undefined>(undefined);
   const videoRef = React.useRef<HTMLVideoElement>(null);
 
   function handleUpdateDevices() {
     navigator.mediaDevices.enumerateDevices().then((devices) => {
-      const videoDevices = devices.filter((device) => device.kind === "videoinput");
+      const videoDevices = devices
+        .filter((device) => device.kind === "videoinput")
+        .map((device) => device as InputDeviceInfo);
       console.log("Found", videoDevices.length, "video devices");
       setDevices(videoDevices);
     });
   }
 
   function handleSelectCamera(event: React.ChangeEvent<HTMLSelectElement>) {
+    // Stop old camera
+    if (videoRef.current) {
+      const stream = videoRef.current.srcObject as MediaStream;
+      if (stream) {
+        stream.getTracks().forEach((track) => track.stop());
+      }
+    }
+
+    // Select new camera
     const deviceId = event.target.value;
     const device = devices.find((device) => device.deviceId === deviceId);
     console.log("Selected device", device);
