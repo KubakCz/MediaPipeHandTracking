@@ -11,6 +11,7 @@ This component handles:
 import React from "react";
 import { ChakraProvider } from "@chakra-ui/react";
 import { Select, Button } from "@chakra-ui/react";
+import fixWebmDuration from "fix-webm-duration";
 import Webcam from "./webcam";
 
 export default function App() {
@@ -53,13 +54,18 @@ export default function App() {
         data.push(event.data);
       };
 
+      const videoStartTime = Date.now();
       recorder.onstop = () => {
+        const duration = Date.now() - videoStartTime;
+        console.log("Recording stopped", duration);
         const blob = new Blob(data, { type: "video/webm" });
-        const url = URL.createObjectURL(blob);
-        const link = document.createElement("a");
-        link.href = url;
-        link.download = "recording.webm";
-        link.click();
+        fixWebmDuration(blob, duration, (fixedBlob) => {
+          const url = URL.createObjectURL(fixedBlob);
+          const a = document.createElement("a");
+          a.href = url;
+          a.download = "video.webm";
+          a.click();
+        });
       };
 
       recorder.start();
