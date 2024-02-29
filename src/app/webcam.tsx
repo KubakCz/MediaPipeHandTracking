@@ -12,8 +12,7 @@ import React from "react";
 import { CSSProperties } from "react";
 import { Box } from "@chakra-ui/react";
 import { HandLandmarker, FilesetResolver, HandLandmarkerResult } from "@mediapipe/tasks-vision";
-import { drawConnectors, drawLandmarks } from "@mediapipe/drawing_utils";
-import { HAND_CONNECTIONS } from "@mediapipe/hands";
+import { drawHands } from "./drawing";
 
 interface VideoBoxProps {
   height?: CSSProperties["height"];
@@ -70,21 +69,26 @@ async function createHandLandmarker() {
 
 interface WebcamProps {
   device: MediaDeviceInfo | undefined;
+  videoRef: React.RefObject<HTMLVideoElement>;
   height?: CSSProperties["height"];
 }
 
-export default function Webcam({ device, height = "480px" }: WebcamProps) {
+export default function Webcam({ device, videoRef, height = "480px" }: WebcamProps) {
   const [handLandmarker, setHandLandmarker] = React.useState<HandLandmarker | undefined>();
-  const videoRef = React.useRef<HTMLVideoElement>(null);
+  const [lastProcessTime, setLastProcessTime] = React.useState<number>(0);
   const canvasRef = React.useRef<HTMLCanvasElement>(null);
 
   // Create hand landmarker on load
   React.useEffect(() => {
     console.log("Creating hand landmarker");
-    createHandLandmarker().then((handLandmarker) => {
-      console.log("Hand landmarker created");
-      setHandLandmarker(handLandmarker);
-    });
+    createHandLandmarker()
+      .then((handLandmarker) => {
+        console.log("Hand landmarker created");
+        setHandLandmarker(handLandmarker);
+      })
+      .catch((error) => {
+        console.error("Error creating hand landmarker", error);
+      });
   }, []);
 
   // Set video source to selected webcam
@@ -109,35 +113,33 @@ export default function Webcam({ device, height = "480px" }: WebcamProps) {
       .catch((error) => {
         console.error("Error accessing the webcam", error);
       });
-  }, [device]);
+  }, [device, videoRef]);
 
   // Hand tracking loop
-  function track(start: number = performance.now()) {
-    if (!handLandmarker) return;
+  const track = React.useCallback(
+    (lastFrameTime: number = 0) => {
+      if (!handLandmarker) return;
 
-    // console.log(start);
-    if (videoRef.current && !videoRef.current.paused && canvasRef.current) {
-      // Get landmarks
-      const results = handLandmarker.detectForVideo(videoRef.current, performance.now());
+      if (videoRef.current && !videoRef.current.paused && canvasRef.current) {
+        const start = performance.now();
+        // Get landmarks
+        const results = handLandmarker.detectForVideo(videoRef.current, performance.now());
 
-      // Draw landmarks
-      const canvasCtx = canvasRef.current.getContext("2d");
-      if (!canvasCtx) {
-        console.error("Canvas context not found");
-        return;
+        // Draw landmarks
+        const canvasCtx = canvasRef.current.getContext("2d");
+        if (!canvasCtx) {
+          console.error("Canvas context not found");
+          return;
+        }
+        drawHands(results, canvasCtx);
+        const end = performance.now();
+        setLastProcessTime(end - start);
       }
-      canvasCtx.save();
-      canvasCtx.clearRect(0, 0, canvasRef.current.width, canvasRef.current.height);
-      for (const landmarks of results.landmarks) {
-        drawConnectors(canvasCtx, landmarks, HAND_CONNECTIONS, {
-          color: "#00FF00",
-          lineWidth: 5,
-        });
-        drawLandmarks(canvasCtx, landmarks, { color: "#FF0000", lineWidth: 2 });
-      }
-    }
-    requestAnimationFrame(() => track(start));
-  }
+
+      requestAnimationFrame(track);
+    },
+    [handLandmarker, videoRef, canvasRef]
+  );
 
   // Start hand tracking loop
   React.useEffect(() => {
@@ -145,7 +147,7 @@ export default function Webcam({ device, height = "480px" }: WebcamProps) {
       console.log("Starting hand tracking loop");
       track();
     }
-  }, [handLandmarker]);
+  }, [handLandmarker, track]);
 
   if (device) {
     const width = videoRef.current?.videoWidth || 640;
@@ -170,6 +172,11 @@ export default function Webcam({ device, height = "480px" }: WebcamProps) {
               width: width,
             }}
           ></canvas>
+          <p
+            style={{ fontSize: "10pt", position: "absolute", left: "5px", top: "5px", zIndex: 10 }}
+          >
+            Last process time {lastProcessTime.toFixed(2)} ms
+          </p>
         </div>
       </VideoBox>
     );
