@@ -68,7 +68,7 @@ async function createHandLandmarker() {
 }
 
 interface WebcamProps {
-  device: MediaDeviceInfo | undefined;
+  device: InputDeviceInfo | undefined;
   videoRef: React.RefObject<HTMLVideoElement>;
   height?: CSSProperties["height"];
 }
@@ -95,9 +95,13 @@ export default function Webcam({ device, videoRef, height = "480px" }: WebcamPro
   React.useEffect(() => {
     if (!device) return;
 
+    const deviceCapabilities = device.getCapabilities();
     const constraints: MediaStreamConstraints = {
       video: {
         deviceId: device.deviceId,
+        width: deviceCapabilities.width?.max,
+        height: deviceCapabilities.height?.max,
+        frameRate: deviceCapabilities.frameRate?.max,
       },
     };
     navigator.mediaDevices
@@ -150,9 +154,11 @@ export default function Webcam({ device, videoRef, height = "480px" }: WebcamPro
   }, [handLandmarker, track]);
 
   if (device) {
-    const width = videoRef.current?.videoWidth || 640;
+    const aspect = videoRef.current
+      ? videoRef.current.videoWidth / videoRef.current.videoHeight
+      : 4 / 3;
     return (
-      <VideoBox height={height} width={width}>
+      <VideoBox height={height} aspectRatio={aspect}>
         <div style={{ position: "relative", width: "100%", height: "100%" }}>
           <video
             className="webcam"
@@ -169,7 +175,7 @@ export default function Webcam({ device, videoRef, height = "480px" }: WebcamPro
               left: "0px",
               top: "0px",
               height: height,
-              width: width,
+              aspectRatio: aspect,
             }}
           ></canvas>
           <p
