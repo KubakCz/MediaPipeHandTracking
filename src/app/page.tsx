@@ -91,7 +91,7 @@ export default function App() {
 
   return (
     <ChakraProvider>
-      <h1>MediaPipe Hand Tracking</h1>
+      <h1>Hand Capture</h1>
       <Select
         onChange={handleSelectCamera}
         variant="outline"
