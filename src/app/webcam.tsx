@@ -10,9 +10,11 @@ This component handles:
 
 import React from "react";
 import { CSSProperties } from "react";
-import { Box } from "@chakra-ui/react";
+import { Box, Button } from "@chakra-ui/react";
 import { HandLandmarker, FilesetResolver, HandLandmarkerResult } from "@mediapipe/tasks-vision";
 import { drawHands } from "./drawing";
+import { VideoRecorder } from "./videoRecorder";
+import { frame } from "framer-motion";
 
 interface VideoBoxProps {
   height?: CSSProperties["height"];
@@ -74,13 +76,20 @@ interface WebcamProps {
 }
 
 export default function Webcam({ device, videoRef, height = "480px" }: WebcamProps) {
-  const [handLandmarker, setHandLandmarker] = React.useState<HandLandmarker | undefined>();
+  const [initialized, setInitialized] = React.useState<boolean>(false);
+  const [handLandmarker, setHandLandmarker] = React.useState<HandLandmarker>();
   const [lastProcessTime, setLastProcessTime] = React.useState<number>(0);
+  const [videoRecorder, setVideoRecorder] = React.useState<VideoRecorder>();
+  const [stream, setStream] = React.useState<MediaStream>();
   const canvasRef = React.useRef<HTMLCanvasElement>(null);
 
-  // Create hand landmarker on load
+  // Initialize
   React.useEffect(() => {
-    console.log("Creating hand landmarker");
+    if (initialized) return;
+
+    setInitialized(true);
+
+    // Create hand landmarker
     createHandLandmarker()
       .then((handLandmarker) => {
         console.log("Hand landmarker created");
@@ -89,12 +98,17 @@ export default function Webcam({ device, videoRef, height = "480px" }: WebcamPro
       .catch((error) => {
         console.error("Error creating hand landmarker", error);
       });
+
+    // Create video recorder
+    const videoRecorder = new VideoRecorder();
+    setVideoRecorder(videoRecorder);
   }, []);
 
   // Set video source to selected webcam
   React.useEffect(() => {
     if (!device) return;
 
+    // Create constraints wit the best resolution and frame rate
     const deviceCapabilities = device.getCapabilities();
     const constraints: MediaStreamConstraints = {
       video: {
@@ -104,15 +118,18 @@ export default function Webcam({ device, videoRef, height = "480px" }: WebcamPro
         frameRate: deviceCapabilities.frameRate?.max,
       },
     };
+
+    // Get and set the webcam stream
     navigator.mediaDevices
       .getUserMedia(constraints)
       .then((stream) => {
-        if (videoRef.current) {
-          videoRef.current.srcObject = stream;
-          const settings = stream.getVideoTracks()[0].getSettings();
-          canvasRef.current!.width = settings.width!;
-          canvasRef.current!.height = settings.height!;
-        }
+        setStream(stream);
+        const videoTrack = stream.getVideoTracks()[0];
+        const settings = videoTrack.getSettings();
+
+        videoRef.current!.srcObject = stream;
+        canvasRef.current!.width = settings.width!;
+        canvasRef.current!.height = settings.height!;
       })
       .catch((error) => {
         console.error("Error accessing the webcam", error);
@@ -121,10 +138,15 @@ export default function Webcam({ device, videoRef, height = "480px" }: WebcamPro
 
   // Hand tracking loop
   const track = React.useCallback(
-    (lastFrameTime: number = 0) => {
+    (frameCount: number = 0) => {
       if (!handLandmarker) return;
 
-      if (videoRef.current && !videoRef.current.paused && canvasRef.current) {
+      if (
+        videoRef.current &&
+        !videoRef.current.paused &&
+        canvasRef.current &&
+        frameCount % 5 === 0
+      ) {
         const start = performance.now();
         // Get landmarks
         const results = handLandmarker.detectForVideo(videoRef.current, performance.now());
@@ -140,7 +162,7 @@ export default function Webcam({ device, videoRef, height = "480px" }: WebcamPro
         setLastProcessTime(end - start);
       }
 
-      requestAnimationFrame(track);
+      requestAnimationFrame(() => track(frameCount + 1));
     },
     [handLandmarker, videoRef, canvasRef]
   );
@@ -153,38 +175,85 @@ export default function Webcam({ device, videoRef, height = "480px" }: WebcamPro
     }
   }, [handLandmarker, track]);
 
+  // Record video
+  const handleRecord = async () => {
+    if (videoRecorder!.recording) {
+      console.log("Stop recording");
+      videoRecorder!.stopRecording();
+    } else {
+      console.log("Start recording");
+      const fileHandler = await window.showSaveFilePicker({
+        suggestedName: "myVideo.webm",
+        types: [
+          {
+            description: "Video File",
+            accept: { "video/webm": [".webm"] },
+          },
+        ],
+      });
+      videoRecorder!.startRecording(fileHandler, stream!.getTracks()[0]);
+    }
+  };
+
   if (device) {
-    const aspect = videoRef.current
-      ? videoRef.current.videoWidth / videoRef.current.videoHeight
-      : 4 / 3;
+    const aspect =
+      videoRef.current && videoRef.current.videoWidth && videoRef.current.videoHeight
+        ? videoRef.current.videoWidth / videoRef.current.videoHeight
+        : 4 / 3;
     return (
-      <VideoBox height={height} aspectRatio={aspect}>
-        <div style={{ position: "relative", width: "100%", height: "100%" }}>
-          <video
-            className="webcam"
-            ref={videoRef}
-            style={{ position: "absolute", left: "0px", top: "0px", height: height }}
-            autoPlay={true}
-            playsInline={true}
-          ></video>
-          <canvas
-            className="output_canvas"
-            ref={canvasRef}
+      <>
+        <VideoBox height={height} aspectRatio={aspect}>
+          <div
             style={{
-              position: "absolute",
-              left: "0px",
-              top: "0px",
-              height: height,
-              aspectRatio: aspect,
+              position: "relative",
+              width: "100%",
+              height: "100%",
+              display: "flex",
+              alignItems: "flex-end",
+              justifyContent: "center",
             }}
-          ></canvas>
-          <p
-            style={{ fontSize: "10pt", position: "absolute", left: "5px", top: "5px", zIndex: 10 }}
           >
-            Last process time {lastProcessTime.toFixed(2)} ms
-          </p>
-        </div>
-      </VideoBox>
+            <video
+              className="webcam"
+              ref={videoRef}
+              style={{ position: "absolute", left: "0px", top: "0px", height: height }}
+              autoPlay={true}
+              playsInline={true}
+            ></video>
+            <canvas
+              className="output_canvas"
+              ref={canvasRef}
+              style={{
+                position: "absolute",
+                left: "0px",
+                top: "0px",
+                height: height,
+                aspectRatio: aspect,
+              }}
+            ></canvas>
+            <p
+              style={{
+                fontSize: "10pt",
+                position: "absolute",
+                left: "5px",
+                top: "5px",
+                zIndex: 10,
+              }}
+            >
+              Last process time {lastProcessTime.toFixed(2)} ms
+            </p>
+            <Button
+              onClick={handleRecord}
+              colorScheme="red"
+              // position="relative"
+              marginBottom="16px"
+              w="120px"
+            >
+              {videoRecorder?.recording ? "Stop" : "Record"}
+            </Button>
+          </div>
+        </VideoBox>
+      </>
     );
   } else {
     return NoWebcamSelected({ height });

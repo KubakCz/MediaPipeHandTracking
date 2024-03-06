@@ -16,7 +16,7 @@ import Webcam from "./webcam";
 
 export default function App() {
   const [devices, setDevices] = React.useState<InputDeviceInfo[]>([]);
-  const [selectedDevice, setSelectedDevice] = React.useState<MediaDeviceInfo | undefined>();
+  const [selectedDevice, setSelectedDevice] = React.useState<InputDeviceInfo | undefined>();
   const [videoRecorder, setVideoRecorder] = React.useState<MediaRecorder | undefined>(undefined);
   const videoRef = React.useRef<HTMLVideoElement>(null);
 
@@ -87,6 +87,12 @@ export default function App() {
   // Update devices on load
   React.useEffect(() => {
     handleUpdateDevices();
+
+    if (typeof window !== "undefined" && !("VideoEncoder" in window)) {
+      console.error("WebCodecs API is not supported");
+    } else {
+      console.log("WebCodecs API is supported");
+    }
   }, []);
 
   return (
@@ -109,11 +115,6 @@ export default function App() {
         Update Devices
       </Button>
       <Webcam device={selectedDevice} videoRef={videoRef} />
-      {selectedDevice && (
-        <Button onClick={handleRecord} margin="16px">
-          {videoRecorder ? "Stop recording" : "Record"}
-        </Button>
-      )}
     </ChakraProvider>
   );
 }
