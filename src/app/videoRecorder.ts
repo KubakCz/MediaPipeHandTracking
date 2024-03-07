@@ -12,6 +12,11 @@ export class VideoRecorder {
   videoEncoder: VideoEncoder | undefined;
   frameCount: number = 0;
   startTime: number = 0;
+  onEnoughTimeCallback: ((VideoFrame: VideoFrame) => void) | undefined;
+
+  constructor(onEnoughTimeCallback?: (VideoFrame: VideoFrame) => void) {
+    this.onEnoughTimeCallback = onEnoughTimeCallback;
+  }
 
   handleChunk = (chunk: EncodedVideoChunk, metadata?: EncodedVideoChunkMetadata) => {
     this.muxer!.addVideoChunk(chunk, metadata);
@@ -27,7 +32,7 @@ export class VideoRecorder {
 
     const frame = result.value;
 
-    if (this.videoEncoder!.encodeQueueSize <= 5) {
+    if (this.videoEncoder!.encodeQueueSize <= 10) {
       this.frameCount++;
       const insert_keyframe = this.frameCount % 150 == 0;
       this.videoEncoder!.encode(frame, { keyFrame: insert_keyframe });
@@ -35,8 +40,15 @@ export class VideoRecorder {
       console.warn("dropping frame, encoder falling behind");
     }
 
-    frame.close();
     this.frameReader!.read().then(this.processFrame);
+
+    if (this.videoEncoder!.encodeQueueSize <= 2 && this.onEnoughTimeCallback) {
+      console.log("enough time");
+      this.onEnoughTimeCallback(frame);
+    } else {
+      console.log("not enough time");
+    }
+    frame.close();
   };
 
   async startRecording(fileHandle: FileSystemFileHandle, track: MediaStreamTrack) {
@@ -93,6 +105,16 @@ export class VideoRecorder {
   async stopRecording() {
     if (this.frameReader) await this.frameReader.cancel();
     this.frameReader = undefined;
+
+    // Wait for the encoder and muxer to finish
+    await new Promise<void>((resolve) => {
+      const intervalId = setInterval(() => {
+        if (!this.recording) {
+          clearInterval(intervalId);
+          resolve();
+        }
+      }, 100); // check every 100 ms
+    });
   }
 
   async cleanup() {

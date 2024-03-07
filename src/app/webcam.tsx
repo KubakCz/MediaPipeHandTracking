@@ -11,7 +11,12 @@ This component handles:
 import React from "react";
 import { CSSProperties } from "react";
 import { Box, Button } from "@chakra-ui/react";
-import { HandLandmarker, FilesetResolver, HandLandmarkerResult } from "@mediapipe/tasks-vision";
+import {
+  HandLandmarker,
+  FilesetResolver,
+  HandLandmarkerResult,
+  ImageSource,
+} from "@mediapipe/tasks-vision";
 import { drawHands } from "./drawing";
 import { VideoRecorder } from "./videoRecorder";
 import { frame } from "framer-motion";
@@ -77,11 +82,11 @@ interface WebcamProps {
 
 export default function Webcam({ device, videoRef, height = "480px" }: WebcamProps) {
   const [initialized, setInitialized] = React.useState<boolean>(false);
-  const [handLandmarker, setHandLandmarker] = React.useState<HandLandmarker>();
   const [lastProcessTime, setLastProcessTime] = React.useState<number>(0);
-  const [videoRecorder, setVideoRecorder] = React.useState<VideoRecorder>();
   const [stream, setStream] = React.useState<MediaStream>();
   const canvasRef = React.useRef<HTMLCanvasElement>(null);
+  const handLandmarkerRef = React.useRef<HandLandmarker>();
+  const videoRecorderRef = React.useRef<VideoRecorder>();
 
   // Initialize
   React.useEffect(() => {
@@ -93,15 +98,14 @@ export default function Webcam({ device, videoRef, height = "480px" }: WebcamPro
     createHandLandmarker()
       .then((handLandmarker) => {
         console.log("Hand landmarker created");
-        setHandLandmarker(handLandmarker);
+        handLandmarkerRef.current = handLandmarker;
       })
       .catch((error) => {
         console.error("Error creating hand landmarker", error);
       });
 
     // Create video recorder
-    const videoRecorder = new VideoRecorder();
-    setVideoRecorder(videoRecorder);
+    videoRecorderRef.current = new VideoRecorder(track);
   }, []);
 
   // Set video source to selected webcam
@@ -110,12 +114,16 @@ export default function Webcam({ device, videoRef, height = "480px" }: WebcamPro
 
     // Create constraints wit the best resolution and frame rate
     const deviceCapabilities = device.getCapabilities();
+    // console.log("Device capabilities", deviceCapabilities);
     const constraints: MediaStreamConstraints = {
       video: {
         deviceId: device.deviceId,
-        width: deviceCapabilities.width?.max,
-        height: deviceCapabilities.height?.max,
-        frameRate: deviceCapabilities.frameRate?.max,
+        // width: deviceCapabilities.width?.max,
+        width: 1280,
+        // width: deviceCapabilities.width?.max,
+        height: 720,
+        // frameRate: deviceCapabilities.frameRate?.max,
+        frameRate: 30,
       },
     };
 
@@ -126,6 +134,7 @@ export default function Webcam({ device, videoRef, height = "480px" }: WebcamPro
         setStream(stream);
         const videoTrack = stream.getVideoTracks()[0];
         const settings = videoTrack.getSettings();
+        console.log("Video track settings", settings);
 
         videoRef.current!.srcObject = stream;
         canvasRef.current!.width = settings.width!;
@@ -134,52 +143,53 @@ export default function Webcam({ device, videoRef, height = "480px" }: WebcamPro
       .catch((error) => {
         console.error("Error accessing the webcam", error);
       });
-  }, [device, videoRef]);
+  }, [device]);
 
-  // Hand tracking loop
-  const track = React.useCallback(
-    (frameCount: number = 0) => {
-      if (!handLandmarker) return;
+  const track = React.useCallback((imgSource: ImageSource) => {
+    const handLandmarker = handLandmarkerRef.current;
+    if (!handLandmarker || !canvasRef.current) return;
+    // return;
 
-      if (
-        videoRef.current &&
-        !videoRef.current.paused &&
-        canvasRef.current &&
-        frameCount % 5 === 0
-      ) {
-        const start = performance.now();
-        // Get landmarks
-        const results = handLandmarker.detectForVideo(videoRef.current, performance.now());
+    const start = performance.now();
 
-        // Draw landmarks
-        const canvasCtx = canvasRef.current.getContext("2d");
-        if (!canvasCtx) {
-          console.error("Canvas context not found");
-          return;
-        }
-        drawHands(results, canvasCtx);
-        const end = performance.now();
-        setLastProcessTime(end - start);
-      }
+    // Get landmarks
+    const results = handLandmarker.detectForVideo(imgSource, performance.now());
 
-      requestAnimationFrame(() => track(frameCount + 1));
-    },
-    [handLandmarker, videoRef, canvasRef]
-  );
+    // Draw landmarks
+    const canvasCtx = canvasRef.current.getContext("2d");
+    if (!canvasCtx) {
+      console.error("Canvas context not found");
+      return;
+    }
+    drawHands(results, canvasCtx);
+
+    const end = performance.now();
+    setLastProcessTime(end - start);
+  }, []);
+
+  const trackLoop = React.useCallback(() => {
+    const videoRecorder = videoRecorderRef.current;
+    if (!videoRecorder || !videoRecorder.recording) {
+      if (videoRef.current && !videoRef.current.paused) track(videoRef.current!);
+      requestAnimationFrame(trackLoop);
+    }
+  }, [track]);
 
   // Start hand tracking loop
   React.useEffect(() => {
-    if (handLandmarker) {
+    if (handLandmarkerRef.current) {
       console.log("Starting hand tracking loop");
-      track();
+      trackLoop();
     }
-  }, [handLandmarker, track]);
+  }, [trackLoop]);
 
   // Record video
   const handleRecord = async () => {
+    const videoRecorder = videoRecorderRef.current;
     if (videoRecorder!.recording) {
+      await videoRecorder!.stopRecording();
       console.log("Stop recording");
-      videoRecorder!.stopRecording();
+      trackLoop();
     } else {
       console.log("Start recording");
       const fileHandler = await window.showSaveFilePicker({
@@ -249,7 +259,7 @@ export default function Webcam({ device, videoRef, height = "480px" }: WebcamPro
               marginBottom="16px"
               w="120px"
             >
-              {videoRecorder?.recording ? "Stop" : "Record"}
+              {videoRecorderRef.current?.recording ? "Stop" : "Record"}
             </Button>
           </div>
         </VideoBox>
