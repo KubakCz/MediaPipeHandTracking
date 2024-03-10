@@ -1,6 +1,5 @@
 import { Box, Button } from "@chakra-ui/react";
 import { CSSProperties, useState, useEffect, useRef, useCallback } from "react";
-import { HandLandmarker, FilesetResolver, ImageSource } from "@mediapipe/tasks-vision";
 import { FileSystemWritableFileStreamTarget, Muxer } from "webm-muxer";
 import { drawHands } from "./drawing";
 
@@ -204,6 +203,11 @@ export default function WebcamPreview({ device, directoryHandle, height }: Webca
   const stopRecording = useCallback(async () => {
     if (!isRecording) throw new Error("No recording in progress");
 
+    console.log(
+      "Stopping recording, avg fps:",
+      (frameCountRef.current / (Date.now() - recordingStartTimeRef.current)) * 1000
+    );
+
     await recordingCleanup();
 
     setIsRecording(false);
@@ -306,12 +310,13 @@ export default function WebcamPreview({ device, directoryHandle, height }: Webca
       video: {
         deviceId: device.deviceId,
         // width: deviceCapabilities.width?.max,
-        // width: 1280,
-        width: 1920,
+        width: 1280,
+        // width: 1920,
         // height: deviceCapabilities.height?.max,
-        // height: 720,
-        height: 1080,
+        height: 720,
+        // height: 1080,
         // frameRate: deviceCapabilities.frameRate?.max,
+        frameRate: 60,
         // frameRate: 30,
       },
     };

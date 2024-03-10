@@ -4,7 +4,7 @@ import { useEffect, useState, useCallback, use } from "react";
 import { Button, ChakraProvider } from "@chakra-ui/react";
 import DeviceSelect from "./DeviceSelect";
 import WebcamPreview from "./WebcamPreview";
-import Script from "next/script";
+import DirecotrySelect from "./DirectorySelect";
 
 export default function App() {
   const [devices, setDevices] = useState<InputDeviceInfo[]>([]);
@@ -45,15 +45,16 @@ export default function App() {
     }
   }, [handleUpdateDevices]);
 
-  function handleDirectorySelect() {
-    window
-      .showDirectoryPicker()
-      .then((directoryHandle) => {
-        setDirectoryHandle(directoryHandle);
-      })
-      .catch((error) => {
-        console.error("Error selecting directory", error);
-      });
+  function handleDirectorySelect(
+    directoryHandle: FileSystemDirectoryHandle | undefined,
+    error?: Error
+  ) {
+    if (directoryHandle) {
+      setDirectoryHandle(directoryHandle);
+    }
+    if (error) {
+      console.error("Error selecting directory", error);
+    }
   }
 
   return (
@@ -65,9 +66,10 @@ export default function App() {
           onDeviceChange={handleDeviceChange}
           onClick={handleUpdateDevices}
         />
-        <Button onClick={handleDirectorySelect} m="16px">
-          Select directory
-        </Button>
+        <DirecotrySelect
+          directoryHandle={directoryHandle}
+          onDirectorySelect={handleDirectorySelect}
+        />
         <WebcamPreview device={selectedDevice} directoryHandle={directoryHandle} />
         {/* <Webcam device={selectedDevice} videoRef={videoRef} /> */}
       </ChakraProvider>
