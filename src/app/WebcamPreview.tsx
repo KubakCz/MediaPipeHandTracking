@@ -2,6 +2,8 @@ import { Box, Button } from "@chakra-ui/react";
 import { CSSProperties, useState, useEffect, useRef, useCallback } from "react";
 import { FileSystemWritableFileStreamTarget, Muxer } from "webm-muxer";
 import { drawHands } from "./drawing";
+import { getEncoderConfig, getMuxerOptions } from "./videoSettings";
+import { handDataToJSON } from "./handDataToJson";
 
 // #region Helper components
 function EmptyBox({
@@ -108,11 +110,13 @@ export default function WebcamPreview({ device, directoryHandle, height }: Webca
   const [stream, setStream] = useState<MediaStream>();
   const streamRef = useRef<MediaStream>();
   const frameReaderRef = useRef<ReadableStreamDefaultReader<VideoFrame>>();
+  const recordedChunksRef = useRef<EncodedVideoChunk[]>([]);
 
   // Hand visualization
   const handLandmarkerWorkerRef = useRef<Worker>();
   const handLandmarkerReadyRef = useRef<boolean>(false);
   const handLandmarkerWorkingRef = useRef<boolean>(false);
+  const handLandmarkerVideoProcessingRef = useRef<boolean>(false);
   const canvasRef = useRef<HTMLCanvasElement>(null);
 
   // Recording
@@ -149,34 +153,51 @@ export default function WebcamPreview({ device, directoryHandle, height }: Webca
     }
 
     // HandLandmarker processing
-    if (handLandmarkerReadyRef.current && !handLandmarkerWorkingRef.current) {
+    if (
+      handLandmarkerReadyRef.current &&
+      !handLandmarkerWorkingRef.current &&
+      !handLandmarkerVideoProcessingRef.current
+    ) {
       handLandmarkerWorkingRef.current = true;
       handLandmarkerWorkerRef.current?.postMessage({ type: "frame", data: frame });
     }
   };
 
   // Handle messages from handLandmarkerWorker
-  const onmessage = (event: MessageEvent<{ type: string; data: any; error?: any }>) => {
-    if (event.data.type === "init") {
-      // HandLandmarker init result
-      if (event.data.data === "done") {
-        handLandmarkerReadyRef.current = true;
+  const onmessage = useCallback(
+    async (event: MessageEvent<{ type: string; data: any; error?: any }>) => {
+      if (event.data.type === "init") {
+        // HandLandmarker init result
+        if (event.data.data === "done") {
+          handLandmarkerReadyRef.current = true;
+        } else {
+          console.error("HandLandmarker init failed", event.data.error);
+        }
+      } else if (event.data.type === "frame") {
+        // HandLandmarker frame result
+        handLandmarkerWorkingRef.current = false;
+        drawHands(event.data.data, canvasRef.current!.getContext("2d")!);
+      } else if (event.data.type === "video") {
+        // HandLandmarker video result
+        handLandmarkerVideoProcessingRef.current = false;
+        try {
+          console.log("Saving hand data");
+          const fileHandle = await directoryHandle?.getFileHandle(`handData_${Date.now()}.json`, {
+            create: true,
+          });
+          const fileWriter = await fileHandle?.createWritable();
+          await fileWriter?.write(handDataToJSON(event.data.data));
+          await fileWriter?.close();
+          console.log("Video processed");
+        } catch (e) {
+          console.error("Error saving hand data", e);
+        }
       } else {
-        console.error("HandLandmarker init failed", event.data.error);
+        console.error("Unknown message type", event.data.type);
       }
-    } else if (event.data.type === "reset") {
-      // HandLandmarker reset result
-      if (event.data.data === "done") {
-        handLandmarkerReadyRef.current = true;
-      } else {
-        console.error("HandLandmarker reset failed", event.data.error);
-      }
-    } else if (event.data.type === "frame") {
-      // HandLandmarker frame result
-      handLandmarkerWorkingRef.current = false;
-      drawHands(event.data.data, canvasRef.current!.getContext("2d")!);
-    }
-  };
+    },
+    [directoryHandle]
+  );
   // #endregion Video processing
 
   // #region Recording
@@ -212,12 +233,22 @@ export default function WebcamPreview({ device, directoryHandle, height }: Webca
 
     setIsRecording(false);
     console.log("Recording stopped");
+
+    // Process the recorded video and save the result
+    handLandmarkerVideoProcessingRef.current = true;
+    handLandmarkerWorkerRef.current?.postMessage({
+      type: "video",
+      data: recordedChunksRef.current,
+    });
+    recordedChunksRef.current = [];
   }, [isRecording]);
 
   const startRecording = useCallback(async () => {
     if (isRecording) throw new Error("Recording already in progress");
     if (!streamRef.current) throw new Error("No stream to record");
     if (!directoryHandle) throw new Error("No directory to save recording");
+    if (handLandmarkerVideoProcessingRef.current)
+      throw new Error("HandLandmarker processing video");
 
     const track = streamRef.current.getVideoTracks()[0];
     const trackSettings = track.getSettings();
@@ -227,36 +258,22 @@ export default function WebcamPreview({ device, directoryHandle, height }: Webca
       create: true,
     });
     videoFileWritableStreamRef.current = await videoFileHandle.createWritable();
-    muxerRef.current = new Muxer({
-      target: new FileSystemWritableFileStreamTarget(videoFileWritableStreamRef.current),
-      video: {
-        codec: "V_VP9",
-        width: trackSettings.width!,
-        height: trackSettings.height!,
-        frameRate: trackSettings.frameRate!,
-        alpha: false,
-      },
-      type: "webm",
-      firstTimestampBehavior: "offset",
-    });
+    muxerRef.current = new Muxer(
+      getMuxerOptions(videoFileWritableStreamRef.current!, trackSettings)
+    );
 
     // Create video encoder
     videoEncoderRef.current = new VideoEncoder({
       output: (chunk: EncodedVideoChunk, metadata?: EncodedVideoChunkMetadata) => {
         muxerRef.current!.addVideoChunk(chunk, metadata);
+        recordedChunksRef.current.push(chunk);
       },
       error: (e: DOMException) => {
         console.log(e.message);
         stopRecording();
       },
     });
-    const videoEncoderConfig = {
-      codec: "vp09.00.10.08",
-      width: trackSettings.width!,
-      height: trackSettings.height!,
-      framerate: trackSettings.frameRate!,
-      bitrate: 5e6,
-    };
+    const videoEncoderConfig = getEncoderConfig(trackSettings);
     const supported = await VideoEncoder.isConfigSupported(videoEncoderConfig);
     if (supported) {
       videoEncoderRef.current.configure(videoEncoderConfig);
@@ -279,13 +296,17 @@ export default function WebcamPreview({ device, directoryHandle, height }: Webca
 
   // Initialize
   useEffect(() => {
-    handLandmarkerWorkerRef.current = new Worker(
-      new URL("handLandmarkerWorker.ts", import.meta.url)
-    );
-    handLandmarkerWorkerRef.current.onmessage = onmessage;
-    handLandmarkerWorkerRef.current.postMessage({ type: "init" });
-    console.log("HandLandmarker worker created");
-  }, []);
+    if (!handLandmarkerWorkerRef.current) {
+      handLandmarkerWorkerRef.current = new Worker(
+        new URL("handLandmarkerWorker.ts", import.meta.url)
+      );
+      handLandmarkerWorkerRef.current.onmessage = onmessage;
+      handLandmarkerWorkerRef.current.postMessage({ type: "init" });
+      console.log("HandLandmarker worker created");
+    } else {
+      handLandmarkerWorkerRef.current.onmessage = onmessage;
+    }
+  }, [onmessage]);
 
   // Handle device change
   useEffect(() => {
@@ -329,10 +350,6 @@ export default function WebcamPreview({ device, directoryHandle, height }: Webca
 
         const videoTrack = stream.getVideoTracks()[0];
         console.log("Video track settings", videoTrack.getSettings());
-
-        // Reset handLandmarker
-        handLandmarkerReadyRef.current = false;
-        handLandmarkerWorkerRef.current?.postMessage({ type: "reset" });
 
         // Set the frame reader and start processing
         const trackProcessor = new MediaStreamTrackProcessor({ track: videoTrack });

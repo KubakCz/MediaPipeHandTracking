@@ -1,6 +1,9 @@
-import { FilesetResolver, HandLandmarker } from "@mediapipe/tasks-vision";
+import { FilesetResolver, HandLandmarker, HandLandmarkerResult } from "@mediapipe/tasks-vision";
+import { get } from "http";
+import { getDecoderConfig } from "./videoSettings";
 
 let handLandmarker: HandLandmarker;
+let lastTimeStamp: number = 0;
 
 onmessage = async (message: MessageEvent<{ type: string; data: any }>) => {
   if (message.data.type === "init") {
@@ -11,16 +14,19 @@ onmessage = async (message: MessageEvent<{ type: string; data: any }>) => {
       .catch((e) => {
         postMessage({ type: "init", data: "error", error: e });
       });
-  } else if (message.data.type === "reset") {
-    handLandmarker.setOptions({
-      runningMode: "VIDEO",
-    });
-    postMessage({ type: "reset", data: "done" });
   } else if (message.data.type === "frame") {
     const videoFrame = message.data.data as VideoFrame;
-    const result = handLandmarker.detectForVideo(videoFrame, videoFrame.timestamp);
+    const result = handleFrame(videoFrame);
     videoFrame.close?.();
     postMessage({ type: "frame", data: result });
+  } else if (message.data.type === "video") {
+    const videoData = message.data.data as EncodedVideoChunk[];
+    handleVideo(videoData).then((handData) => {
+      if (handData) postMessage({ type: "video", data: handData });
+      else postMessage({ type: "video", data: "error" });
+    });
+  } else {
+    console.error("Unknown message type", message.data.type);
   }
 };
 
@@ -36,4 +42,53 @@ async function handleInit() {
     runningMode: "VIDEO",
     numHands: 2,
   });
+}
+
+function handleFrame(frame: VideoFrame) {
+  // console.log("Handling frame", frame.timestamp, "Last timestamp", lastTimeStamp);
+  if (frame.timestamp <= lastTimeStamp) {
+    // Reset the handLandmarker to process video frames
+    handLandmarker.setOptions({
+      runningMode: "VIDEO",
+      numHands: 2,
+    });
+  }
+
+  // Process the frame
+  lastTimeStamp = frame.timestamp;
+  return handLandmarker.detectForVideo(frame, frame.timestamp);
+}
+
+async function handleVideo(videoData: EncodedVideoChunk[]) {
+  // Setup a decoder to decode the video chunks and process the frames
+  const handData: { timestamp: number; data: HandLandmarkerResult }[] = [];
+  const videoDecoder = new VideoDecoder({
+    output: (frame) => {
+      // console.log("Decoded frame", frame.timestamp);
+      const result = handleFrame(frame);
+      handData.push({ timestamp: frame.timestamp, data: result });
+      frame.close();
+    },
+    error: (error: any) => {
+      console.error("Video decoding failed: ", error);
+      videoDecoder.close();
+    },
+  });
+  const videoDecoderConfig = getDecoderConfig();
+  const supported = await VideoDecoder.isConfigSupported(videoDecoderConfig);
+  if (supported) {
+    videoDecoder.configure(videoDecoderConfig);
+  } else {
+    console.error("Video decoder configuration not supported");
+    return;
+  }
+
+  // Decode the video and wait for the result
+  for (const chunk of videoData) {
+    videoDecoder.decode(chunk);
+  }
+  await videoDecoder.flush();
+  videoDecoder.close();
+
+  return handData;
 }
