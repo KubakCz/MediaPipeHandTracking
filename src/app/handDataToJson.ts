@@ -1,5 +1,4 @@
 import { HandLandmarkerResult } from "@mediapipe/tasks-vision";
-import { timeStamp } from "console";
 
 interface Vector3 {
   x: number;
@@ -35,18 +34,17 @@ export function handDataToJSON(
     for (let i = 0; i < data.handedness.length; i++) {
       const dataRef =
         data.handedness[i][0].categoryName === "Left"
-          ? transformedData.Left
-          : transformedData.Right;
+          ? transformedData.Right
+          : transformedData.Left;
       if (dataRef.length > 0 && dataRef[dataRef.length - 1].timestamp >= timestamp) {
         console.warn("Timestamps are not in order or are duplicated. Skipping frame.");
         continue;
       }
 
-      const index = data.handedness[i][0].index;
       const handData: HandFrame = {
         timestamp,
-        normalizedPositions: data.landmarks[index],
-        worldPositions: data.worldLandmarks[index],
+        normalizedPositions: data.landmarks[i],
+        worldPositions: data.worldLandmarks[i],
       };
       dataRef.push(handData);
     }
