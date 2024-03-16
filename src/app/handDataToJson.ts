@@ -12,9 +12,9 @@ interface HandFrame {
   worldPositions: Vector3[];
 }
 
-interface TransformedData {
-  Left: HandFrame[];
-  Right: HandFrame[];
+interface HandAnimationData {
+  name: string;
+  animationData: HandFrame[];
 }
 
 export function handDataToJSON(
@@ -26,21 +26,25 @@ export function handDataToJSON(
     data: frame.data,
   }));
 
-  const transformedData: TransformedData = { Left: [], Right: [] };
+  const transformedData: HandAnimationData[] = [
+    { name: "Left", animationData: [] },
+    { name: "Right", animationData: [] },
+  ];
 
   for (const frame of handData) {
     const data = frame.data;
     const timestamp = frame.timestamp / 1000000;
     for (let i = 0; i < data.handedness.length; i++) {
       const dataRef =
-        data.handedness[i][0].categoryName === "Left"
-          ? transformedData.Right
-          : transformedData.Left;
+        data.handedness[i][0].categoryName === "Left" // Note: as MediaPipe works with mirror images, the true handedness is reversed
+          ? transformedData[1].animationData
+          : transformedData[0].animationData;
       if (dataRef.length > 0 && dataRef[dataRef.length - 1].timestamp >= timestamp) {
         console.warn("Timestamps are not in order or are duplicated. Skipping frame.");
         continue;
       }
 
+      const vsPositions = data.worldLandmarks[i].map((v) => ({ x: v.x, y: -v.y, z: v.z }));
       const handData: HandFrame = {
         timestamp,
         normalizedPositions: data.landmarks[i],
