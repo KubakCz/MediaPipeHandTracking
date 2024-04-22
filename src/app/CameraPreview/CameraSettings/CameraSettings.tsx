@@ -2,6 +2,8 @@ import { use, useEffect, useState } from "react";
 import { CameraCapabilities } from "./CameraCapabilities";
 import CameraSettingsSwitch from "./CameraSettingSwitch";
 import CameraSettingSlider from "./CameraSettingSlider";
+import CameraSettingsDropdown from "./CameraSettingsDropdown";
+import { RESOLUTIONS, Resolution } from "./Resolution";
 
 /**
  * Properties for the camera settings form.
@@ -37,8 +39,7 @@ export default function CameraSettings({ videoTrack, handLandmarkerWorker }: Cam
   const [whiteBalance, setWhiteBalance] = useState<number>(0);
 
   // Resolution and Frame Rate
-  const [width, setWidth] = useState<number>(0);
-  const [height, setHeight] = useState<number>(0);
+  const [resolution, setResolution] = useState<Resolution>(new Resolution(1280, 720));
   const [frameRate, setFrameRate] = useState<number>(0);
 
   // Image settings
@@ -51,7 +52,6 @@ export default function CameraSettings({ videoTrack, handLandmarkerWorker }: Cam
   // #region useEffect
   /**
    * Updates the state variables when the video track changes.
-   * Also used to update sliders when swithing between auto and manual settings.
    */
   useEffect(() => {
     if (videoTrack) {
@@ -92,8 +92,7 @@ export default function CameraSettings({ videoTrack, handLandmarkerWorker }: Cam
         setSharpness(settings[CameraCapabilities.Sharpness] as number);
 
       // Resolution and Frame Rate
-      setWidth(settings.width!);
-      setHeight(settings.height!);
+      setResolution(new Resolution(settings.width!, settings.height!));
       setFrameRate(settings.frameRate!);
     }
   }, [videoTrack]);
@@ -195,10 +194,15 @@ export default function CameraSettings({ videoTrack, handLandmarkerWorker }: Cam
   }
 
   // Resolution and Frame Rate
-  function handleResolutionChange(width: number, height: number) {
-    setWidth(width);
-    setHeight(height);
-    videoTrack!.applyConstraints({ width, height });
+  function handleResolutionChange(resolution: Resolution) {
+    setResolution(resolution);
+    console.log(`Setting resolution to ${resolution.width}x${resolution.height}`);
+    videoTrack!
+      .applyConstraints({ width: resolution.width, height: resolution.height })
+      .then(() => {
+        const settings = videoTrack!.getSettings();
+        console.log(`Resolution set to ${settings.width}x${settings.height}`);
+      });
   }
 
   function handleFrameRateChange(frameRate: number) {
@@ -314,6 +318,30 @@ export default function CameraSettings({ videoTrack, handLandmarkerWorker }: Cam
 
   // #endregion IsDisabled
 
+  // #region Frame Rate and Resolution helper functions
+  /**
+   * Generates a list of frame rates up to the maximum frame rate.
+   */
+  function generateFrameRates(maxFrameRate: number): number[] {
+    const frameRates = [30];
+    while (frameRates[frameRates.length - 1] < maxFrameRate) {
+      frameRates.push(Math.min(frameRates[frameRates.length - 1] + 30, maxFrameRate));
+    }
+    return frameRates;
+  }
+
+  /**
+   * Generates a list of resolutions that are supported by the video track capabilities.
+   */
+  function generateResolutions(videoTrackCapabilities: MediaTrackCapabilities): Resolution[] {
+    const maxWidth = videoTrackCapabilities.width!.max!;
+    const maxHeight = videoTrackCapabilities.height!.max!;
+    return RESOLUTIONS.filter((resolution) => {
+      return resolution.width <= maxWidth && resolution.height <= maxHeight;
+    });
+  }
+  // #endregion Frame Rate and Resolution helper functions
+
   const videoTrackCapabilitiesAny = videoTrackCapabilities as any;
 
   // #region Return
@@ -379,13 +407,24 @@ export default function CameraSettings({ videoTrack, handLandmarkerWorker }: Cam
         step={videoTrackCapabilitiesAny?.colorTemperature?.step}
         onChange={handleWhiteBalanceChange}
       />
-      <CameraSettingSlider
+      <CameraSettingsDropdown
+        label="Resolution"
+        value={resolution}
+        isDisabled={isResolutionDisabled}
+        options={
+          videoTrackCapabilities
+            ? generateResolutions(videoTrackCapabilities)
+            : [new Resolution(1280, 720)]
+        }
+        onChange={handleResolutionChange}
+      />
+      <CameraSettingsDropdown
         label="Frame Rate"
         value={frameRate}
         isDisabled={isFrameRateDisabled}
-        min={videoTrackCapabilitiesAny?.frameRate?.min}
-        max={videoTrackCapabilitiesAny?.frameRate?.max}
-        step={videoTrackCapabilitiesAny?.frameRate?.step}
+        options={
+          videoTrackCapabilities ? generateFrameRates(videoTrackCapabilities.frameRate!.max!) : [30]
+        }
         onChange={handleFrameRateChange}
       />
       <CameraSettingSlider

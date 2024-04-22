@@ -1,6 +1,8 @@
-import { Box, Slider, SliderFilledTrack, SliderThumb, SliderTrack } from "@chakra-ui/react";
-import { on } from "events";
+import { Slider, SliderFilledTrack, SliderThumb, SliderTrack } from "@chakra-ui/react";
 
+/**
+ * Camera setting slider props.
+ */
 interface CameraSettingSliderProps {
   label: string;
   value: number;
