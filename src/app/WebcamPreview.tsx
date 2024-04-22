@@ -1,9 +1,12 @@
-import { Box, Button } from "@chakra-ui/react";
+import { Box, Button, Slider, SliderFilledTrack, SliderThumb, SliderTrack } from "@chakra-ui/react";
 import { CSSProperties, useState, useEffect, useRef, useCallback } from "react";
 import { FileSystemWritableFileStreamTarget, Muxer } from "webm-muxer";
 import { drawHands } from "./drawing";
 import { getEncoderConfig, getMuxerOptions } from "./videoSettings";
 import { handDataToJSON } from "./handDataToJson";
+import CameraSettingSlider from "./CameraPreview/CameraSettings/CameraSettingSlider";
+import CameraSettingSwitch from "./CameraPreview/CameraSettings/CameraSettingSwitch";
+import CameraSettings from "./CameraPreview/CameraSettings/CameraSettings";
 
 // #region Helper components
 function EmptyBox({
@@ -97,7 +100,35 @@ function RecordButton({ isRecording, onClick }: { isRecording: boolean; onClick:
     </Button>
   );
 }
+
 // #endregion Helper components
+
+function formatedNow() {
+  const date = new Date();
+  const year = date.getFullYear();
+  const month = String(date.getMonth() + 1).padStart(2, "0");
+  const day = String(date.getDate()).padStart(2, "0");
+  const hours = String(date.getHours()).padStart(2, "0");
+  const minutes = String(date.getMinutes()).padStart(2, "0");
+  const seconds = String(date.getSeconds()).padStart(2, "0");
+
+  return `${year}-${month}-${day}-${hours}-${minutes}-${seconds}`;
+}
+
+interface WebcamSettingsProps {
+  brightness: number;
+  contrast: number;
+  saturation: number;
+  sharpness: number;
+  exposureMode: string;
+  exposureTime: number;
+  exposureCompensation: number;
+  focusMode: string;
+  focusDistance: number;
+  frameRate: number;
+  width: number;
+  height: number;
+}
 
 interface WebcamPreviewProps {
   device: InputDeviceInfo | undefined;
@@ -109,6 +140,7 @@ export default function WebcamPreview({ device, directoryHandle, height }: Webca
   // Video processing
   const [stream, setStream] = useState<MediaStream>();
   const streamRef = useRef<MediaStream>();
+  const videoTrackRef = useRef<MediaStreamTrack>();
   const frameReaderRef = useRef<ReadableStreamDefaultReader<VideoFrame>>();
   const recordedChunksRef = useRef<EncodedVideoChunk[]>([]);
 
@@ -182,9 +214,12 @@ export default function WebcamPreview({ device, directoryHandle, height }: Webca
         handLandmarkerVideoProcessingRef.current = false;
         try {
           console.log("Saving hand data");
-          const fileHandle = await directoryHandle?.getFileHandle(`handData_${Date.now()}.json`, {
-            create: true,
-          });
+          const fileHandle = await directoryHandle?.getFileHandle(
+            `handData_${formatedNow()}.json`,
+            {
+              create: true,
+            }
+          );
           const fileWriter = await fileHandle?.createWritable();
           await fileWriter?.write(handDataToJSON(event.data.data));
           await fileWriter?.close();
@@ -254,7 +289,7 @@ export default function WebcamPreview({ device, directoryHandle, height }: Webca
     const trackSettings = track.getSettings();
 
     // Create destination file and muxer
-    const videoFileHandle = await directoryHandle.getFileHandle(`recording_${Date.now()}.webm`, {
+    const videoFileHandle = await directoryHandle.getFileHandle(`recording_${formatedNow()}.webm`, {
       create: true,
     });
     videoFileWritableStreamRef.current = await videoFileHandle.createWritable();
@@ -348,11 +383,12 @@ export default function WebcamPreview({ device, directoryHandle, height }: Webca
         streamRef.current = stream;
         setStream(stream);
 
-        const videoTrack = stream.getVideoTracks()[0];
-        console.log("Video track settings", videoTrack.getSettings());
+        videoTrackRef.current = stream.getVideoTracks()[0];
+        console.log("Video track settings", videoTrackRef.current.getSettings());
+        console.log("Video track capabilities", videoTrackRef.current.getCapabilities());
 
         // Set the frame reader and start processing
-        const trackProcessor = new MediaStreamTrackProcessor({ track: videoTrack });
+        const trackProcessor = new MediaStreamTrackProcessor({ track: videoTrackRef.current });
         const reader = trackProcessor.readable.getReader();
         frameReaderRef.current = reader;
         frameReaderLoop(reader);
@@ -362,12 +398,25 @@ export default function WebcamPreview({ device, directoryHandle, height }: Webca
       });
   }, [device, frameReaderLoop]);
 
-  if (!device) return <EmptyBox height={height}>No camera selected</EmptyBox>;
+  if (!device)
+    return (
+      <>
+        <EmptyBox height={height}>No camera selected</EmptyBox>
+        <CameraSettings
+          videoTrack={videoTrackRef.current || null}
+          handLandmarkerWorker={handLandmarkerWorkerRef.current || null}
+        />
+      </>
+    );
 
   return (
     <>
       <RecordButton isRecording={isRecording} onClick={handleRecord} />
       <CameraPreview stream={streamRef.current} canvasRef={canvasRef} height={height} />
+      <CameraSettings
+        videoTrack={videoTrackRef.current || null}
+        handLandmarkerWorker={handLandmarkerWorkerRef.current || null}
+      />
     </>
   );
 }

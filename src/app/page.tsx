@@ -2,9 +2,12 @@
 
 import { useEffect, useState, useCallback, use } from "react";
 import { Button, ChakraProvider } from "@chakra-ui/react";
+import { getConnectionSettings, getDefaultConnectionSettings } from "./requests/requests";
 import DeviceSelect from "./DeviceSelect";
 import WebcamPreview from "./WebcamPreview";
 import DirecotrySelect from "./DirectorySelect";
+import IPInput from "./NatNetConnection/IPInput";
+import ConnectionSettings from "./NatNetConnection/ConnectionSettings";
 
 export default function App() {
   const [devices, setDevices] = useState<InputDeviceInfo[]>([]);
@@ -71,7 +74,7 @@ export default function App() {
           onDirectorySelect={handleDirectorySelect}
         />
         <WebcamPreview device={selectedDevice} directoryHandle={directoryHandle} />
-        {/* <Webcam device={selectedDevice} videoRef={videoRef} /> */}
+        <ConnectionSettings />
       </ChakraProvider>
     </>
   );

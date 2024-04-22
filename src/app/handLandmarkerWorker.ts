@@ -4,6 +4,7 @@ import { getDecoderConfig } from "./videoSettings";
 
 let handLandmarker: HandLandmarker;
 let lastTimeStamp: number = 0;
+let numHands: number = 2;
 
 onmessage = async (message: MessageEvent<{ type: string; data: any }>) => {
   if (message.data.type === "init") {
@@ -14,6 +15,12 @@ onmessage = async (message: MessageEvent<{ type: string; data: any }>) => {
       .catch((e) => {
         postMessage({ type: "init", data: "error", error: e });
       });
+  } else if (message.data.type === "setNumHands") {
+    if (typeof message.data.data !== "number") {
+      console.error("Invalid data type", typeof message.data.data);
+      return;
+    }
+    handleSetNumHands(message.data.data);
   } else if (message.data.type === "frame") {
     const videoFrame = message.data.data as VideoFrame;
     const result = handleFrame(videoFrame);
@@ -40,8 +47,23 @@ async function handleInit() {
       delegate: "GPU",
     },
     runningMode: "VIDEO",
-    numHands: 2,
+    numHands: numHands,
   });
+}
+
+function handleSetNumHands(newNumHands: number) {
+  if (newNumHands != 1 && newNumHands != 2) {
+    console.error("Invalid number of hands", newNumHands);
+    return;
+  }
+
+  if (numHands != newNumHands && handLandmarker) {
+    numHands = newNumHands;
+    handLandmarker.setOptions({
+      numHands: numHands,
+    });
+    // Should send response!
+  }
 }
 
 function handleFrame(frame: VideoFrame) {
@@ -50,7 +72,7 @@ function handleFrame(frame: VideoFrame) {
     // Reset the handLandmarker to process video frames
     handLandmarker.setOptions({
       runningMode: "VIDEO",
-      numHands: 2,
+      numHands: numHands,
     });
   }
 
