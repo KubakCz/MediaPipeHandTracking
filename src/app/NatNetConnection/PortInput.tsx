@@ -11,6 +11,10 @@ function isValidPort(port: number): boolean {
   return !isNaN(port) && port >= 0 && port <= 65535;
 }
 
+/**
+ * Port number input component.
+ * Checks if the input is a valid port number.
+ */
 export default function PortInput({ label, value, onChange }: PortInputProps) {
   const [portString, setPortString] = useState<string>("0");
   const [isValid, setIsValid] = useState<boolean>(true);

@@ -1,6 +1,9 @@
 import { Input } from "@chakra-ui/react";
 import { useEffect, useState } from "react";
 
+/**
+ * Properties for the IP address input component.
+ */
 interface IPInputProps {
   label: string;
   value: string | null;
@@ -10,6 +13,10 @@ interface IPInputProps {
 const ipPattern =
   /^((25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\.){3}(25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)$/;
 
+/**
+ * IP address input component.
+ * Checks if the input is a valid IP address.
+ */
 export default function IPInput({ label, value, onChange }: IPInputProps) {
   const [ipString, setIpString] = useState<string>("");
 

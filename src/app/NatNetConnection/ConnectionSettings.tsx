@@ -6,7 +6,8 @@ import { Button, Select, Spinner, useToast } from "@chakra-ui/react";
 import * as requests from "../requests/requests";
 
 /**
- * Component for the connection settings form.
+ * Connection settings form component. 
+ * Used to connect to a NatNet server.
  */
 export default function ConnectionSettings() {
   // State variables for the connection status
