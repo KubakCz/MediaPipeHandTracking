@@ -2,11 +2,9 @@
 
 import { useEffect, useState, useCallback, use } from "react";
 import { Button, ChakraProvider } from "@chakra-ui/react";
-import { getConnectionSettings, getDefaultConnectionSettings } from "./requests/requests";
 import DeviceSelect from "./DeviceSelect";
-import WebcamPreview from "./WebcamPreview";
+import WebcamPreview from "./CameraPreview/WebcamPreview";
 import DirecotrySelect from "./DirectorySelect";
-import IPInput from "./NatNetConnection/IPInput";
 import ConnectionSettings from "./NatNetConnection/ConnectionSettings";
 
 export default function App() {
@@ -63,7 +61,6 @@ export default function App() {
   return (
     <>
       <ChakraProvider>
-        <h1>Hand Capture</h1>
         <DeviceSelect
           devices={devices}
           onDeviceChange={handleDeviceChange}

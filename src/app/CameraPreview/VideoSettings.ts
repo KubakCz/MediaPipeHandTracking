@@ -1,5 +1,11 @@
 import { FileSystemWritableFileStreamTarget, MuxerOptions } from "webm-muxer";
 
+/**
+ * Generates configuration for a muxer.
+ * @param writableStream Writable stream to write the muxed data to.
+ * @param trackSettings Settings of the recorded video track.
+ * @returns Muxer configuration.
+ */
 export function getMuxerOptions(
   writableStream: FileSystemWritableFileStream,
   trackSettings: MediaTrackSettings
@@ -18,6 +24,11 @@ export function getMuxerOptions(
   };
 }
 
+/**
+ * Generates configuration for a video encoder.
+ * @param trackSettings Settings of the encoded video track.
+ * @returns Encoder configuration.
+ */
 export function getEncoderConfig(trackSettings: MediaTrackSettings): VideoEncoderConfig {
   return {
     codec: "vp09.00.10.08",
@@ -28,6 +39,10 @@ export function getEncoderConfig(trackSettings: MediaTrackSettings): VideoEncode
   };
 }
 
+/**
+ * Generates configuration for a video decoder.
+ * @returns Decoder configuration.
+ */
 export function getDecoderConfig(): VideoDecoderConfig {
   return {
     codec: "vp09.00.10.08",

@@ -1,29 +1,31 @@
-import { use, useEffect, useState } from "react";
+import { useEffect, useState } from "react";
 import { CameraCapabilities } from "./CameraCapabilities";
 import CameraSettingsSwitch from "./CameraSettingSwitch";
 import CameraSettingSlider from "./CameraSettingSlider";
 import CameraSettingsDropdown from "./CameraSettingsDropdown";
 import { RESOLUTIONS, Resolution } from "./Resolution";
+import { HandLandmarker } from "../HandLandmarker/HandLandmarker";
 
 /**
  * Properties for the camera settings form.
  */
 interface CameraSettingsProps {
   videoTrack: MediaStreamTrack | null;
-  handLandmarkerWorker: Worker | null;
+  handLandmarker: HandLandmarker | null;
 }
 
 /**
  * Camera settings form component.
  * Controls settings of the provided video track and hand tracking worker.
  */
-export default function CameraSettings({ videoTrack, handLandmarkerWorker }: CameraSettingsProps) {
+export default function CameraSettings({ videoTrack, handLandmarker }: CameraSettingsProps) {
   // #region State variables
   const [videoTrackCapabilities, setVideoTrackCapabilities] =
     useState<MediaTrackCapabilities | null>(null);
 
   // Tracking
   const [trackTwoHands, setTrackTwoHands] = useState<boolean>(false);
+  const [settingNumHands, setSettingNumHands] = useState<boolean>(false);
 
   // Exposure
   const [autoexposure, setAutoexposure] = useState<boolean>(true);
@@ -98,17 +100,31 @@ export default function CameraSettings({ videoTrack, handLandmarkerWorker }: Cam
   }, [videoTrack]);
 
   /**
-   * Updates the number of hands to track when the handLandmarkerWorker or trackTwoHands changes.
+   * Updates the number of hands to track when the handLandmarkerWorker and trackTwoHands changes.
    */
   useEffect(() => {
-    if (handLandmarkerWorker)
-      handLandmarkerWorker.postMessage({ type: "setNumHands", data: trackTwoHands ? 2 : 1 });
-  }, [handLandmarkerWorker, trackTwoHands]);
+    if (!handLandmarker) return;
+
+    setSettingNumHands(true);
+    handLandmarker
+      .waitForInitialization()
+      .then(() => {
+        if (handLandmarker.settingNumHands) return;
+        handLandmarker.setNumHands(trackTwoHands ? 2 : 1);
+      })
+      .catch((error) => {
+        console.error(error);
+      })
+      .finally(() => {
+        setSettingNumHands(false);
+      });
+  }, [handLandmarker, trackTwoHands]);
   // #endregion useEffect
 
   // #region Change handlers
   // Tracking
   function handleTrackTwoHandsChange(trackTwoHands: boolean) {
+    if (!handLandmarker || handLandmarker.settingNumHands) return;
     setTrackTwoHands(trackTwoHands);
     // Message to the handLandmarkerWorker is sent in the useEffect hook
   }
@@ -254,7 +270,7 @@ export default function CameraSettings({ videoTrack, handLandmarkerWorker }: Cam
 
   // #region IsDisabled
   // Tracking
-  const isTrackTwoHandsDisabled = !handLandmarkerWorker;
+  const isTrackTwoHandsDisabled = !handLandmarker || settingNumHands;
 
   // Exposure
   const isAutoexposureDisabled =
@@ -350,7 +366,7 @@ export default function CameraSettings({ videoTrack, handLandmarkerWorker }: Cam
       <CameraSettingsSwitch
         label="Track Two Hands"
         value={trackTwoHands}
-        isDisabled={!handLandmarkerWorker}
+        isDisabled={isTrackTwoHandsDisabled}
         onChange={handleTrackTwoHandsChange}
       />
       <CameraSettingsSwitch
