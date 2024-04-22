@@ -1,33 +1,33 @@
 import { Box, Slider, SliderFilledTrack, SliderThumb, SliderTrack } from "@chakra-ui/react";
+import { on } from "events";
 
 interface CameraSettingSliderProps {
   label: string;
   value: number;
-  setValue: (value: number) => void;
   min?: number;
   max?: number;
   step?: number;
+  isDisabled?: boolean;
   onChange?: (value: number) => void;
   onChangeEnd?: (value: number) => void;
 }
 
+/**
+ * Camera setting slider component.
+ * Used to adjust camera settings with a slider.
+ */
 export default function CameraSettingSlider({
   label,
   value,
-  setValue,
   min,
   max,
   step,
+  isDisabled,
   onChange,
   onChangeEnd,
 }: CameraSettingSliderProps) {
-  function handleChange(newValue: number) {
-    setValue(newValue);
-    onChange && onChange(newValue);
-  }
-
   return (
-    <Box bg="gray.100" borderWidth="1px" borderRadius="lg" m="16px" p="8px">
+    <>
       <label>{label}</label>
       <Slider
         aria-label="slider-ex-1"
@@ -35,7 +35,8 @@ export default function CameraSettingSlider({
         min={min}
         max={max}
         step={step}
-        onChange={handleChange}
+        isDisabled={isDisabled || false}
+        onChange={onChange}
         onChangeEnd={onChangeEnd}
       >
         <SliderTrack>
@@ -43,6 +44,6 @@ export default function CameraSettingSlider({
         </SliderTrack>
         <SliderThumb />
       </Slider>
-    </Box>
+    </>
   );
 }

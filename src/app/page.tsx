@@ -63,7 +63,6 @@ export default function App() {
   return (
     <>
       <ChakraProvider>
-        <ConnectionSettings />
         <h1>Hand Capture</h1>
         <DeviceSelect
           devices={devices}
@@ -75,7 +74,7 @@ export default function App() {
           onDirectorySelect={handleDirectorySelect}
         />
         <WebcamPreview device={selectedDevice} directoryHandle={directoryHandle} />
-        {/* <Webcam device={selectedDevice} videoRef={videoRef} /> */}
+        <ConnectionSettings />
       </ChakraProvider>
     </>
   );

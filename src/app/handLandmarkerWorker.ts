@@ -57,11 +57,12 @@ function handleSetNumHands(newNumHands: number) {
     return;
   }
 
-  if (numHands != newNumHands) {
+  if (numHands != newNumHands && handLandmarker) {
     numHands = newNumHands;
     handLandmarker.setOptions({
       numHands: numHands,
     });
+    // Should send response!
   }
 }
 

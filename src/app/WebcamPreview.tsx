@@ -4,8 +4,9 @@ import { FileSystemWritableFileStreamTarget, Muxer } from "webm-muxer";
 import { drawHands } from "./drawing";
 import { getEncoderConfig, getMuxerOptions } from "./videoSettings";
 import { handDataToJSON } from "./handDataToJson";
-import CameraSettingSlider from "./CameraSettingSlider";
-import CameraSettingSwitch from "./CameraSettingSwitch";
+import CameraSettingSlider from "./CameraPreview/CameraSettings/CameraSettingSlider";
+import CameraSettingSwitch from "./CameraPreview/CameraSettings/CameraSettingSwitch";
+import CameraSettings from "./CameraPreview/CameraSettings/CameraSettings";
 
 // #region Helper components
 function EmptyBox({
@@ -157,21 +158,6 @@ export default function WebcamPreview({ device, directoryHandle, height }: Webca
   const videoEncoderRef = useRef<VideoEncoder>();
   const frameCountRef = useRef<number>(0);
   const recordingStartTimeRef = useRef<number>(0);
-
-  /// Webcam settings
-  const [brightness, setBrightness] = useState<number>(0);
-  const [contrast, setContrast] = useState<number>(0);
-  const [saturation, setSaturation] = useState<number>(0);
-  const [sharpness, setSharpness] = useState<number>(0);
-  const [autoexposure, setAutoexposure] = useState<boolean>(true);
-  const [exposureTime, setExposureTime] = useState<number>(0);
-  const [exposureCompensation, setExposureCompensation] = useState<number>(0);
-  const [autofocus, setAutofocus] = useState<boolean>(true);
-  const [focusDistance, setFocusDistance] = useState<number>(0);
-  const [frameRate, setFrameRate] = useState<number>(0);
-  const [webcamWidth, setWebcamWidth] = useState<number>(0);
-  const [webcamHeight, setWebcamHeight] = useState<number>(0);
-  const [trackTwoHands, setTrackTwoHands] = useState<boolean>(true);
 
   // #region Video processing
   const frameReaderLoop = useCallback(async (reader: ReadableStreamDefaultReader<VideoFrame>) => {
@@ -412,214 +398,24 @@ export default function WebcamPreview({ device, directoryHandle, height }: Webca
       });
   }, [device, frameReaderLoop]);
 
-  function handleBrightnessChange(value: number) {
-    if (videoTrackRef.current && "brightness" in videoTrackRef.current.getCapabilities()) {
-      console.log("Setting brightness", value);
-      videoTrackRef.current.applyConstraints({ advanced: [{ brightness: value } as any] });
-    }
-  }
-
-  function handleContrastChange(value: number) {
-    if (videoTrackRef.current && "contrast" in videoTrackRef.current.getCapabilities()) {
-      console.log("Setting contrast", value);
-      videoTrackRef.current.applyConstraints({ advanced: [{ contrast: value } as any] });
-    }
-  }
-
-  function handleSaturationChange(value: number) {
-    if (videoTrackRef.current && "saturation" in videoTrackRef.current.getCapabilities()) {
-      console.log("Setting saturation", value);
-      videoTrackRef.current.applyConstraints({ advanced: [{ saturation: value } as any] });
-    }
-  }
-
-  function handleSharpnessChange(value: number) {
-    if (videoTrackRef.current && "sharpness" in videoTrackRef.current.getCapabilities()) {
-      console.log("Setting sharpness", value);
-      videoTrackRef.current.applyConstraints({ advanced: [{ sharpness: value } as any] });
-    }
-  }
-
-  function handleAutoexposureChange(value: boolean) {
-    if (videoTrackRef.current && "exposureMode" in videoTrackRef.current.getCapabilities()) {
-      const mode = value ? "continuous" : "manual";
-      console.log("Setting exposureMode", mode);
-      videoTrackRef.current.applyConstraints({ advanced: [{ exposureMode: mode } as any] });
-    }
-  }
-
-  function handleExposureTimeChange(value: number) {
-    if (videoTrackRef.current && "exposureTime" in videoTrackRef.current.getCapabilities()) {
-      console.log("Setting exposureTime", value);
-      videoTrackRef.current.applyConstraints({ advanced: [{ exposureTime: value } as any] });
-    }
-  }
-
-  function handleExposureCompensationChange(value: number) {
-    if (
-      videoTrackRef.current &&
-      "exposureCompensation" in videoTrackRef.current.getCapabilities()
-    ) {
-      console.log("Setting exposureCompensation", value);
-      videoTrackRef.current.applyConstraints({
-        advanced: [{ exposureCompensation: value } as any],
-      });
-    }
-  }
-
-  function handleAutofocusChange(value: boolean) {
-    if (videoTrackRef.current && "focusMode" in videoTrackRef.current.getCapabilities()) {
-      const mode = value ? "continuous" : "manual";
-      console.log("Setting focusMode", mode);
-      videoTrackRef.current.applyConstraints({ advanced: [{ focusMode: mode } as any] });
-    }
-  }
-
-  function handleFrameRateChange(value: number) {
-    if (videoTrackRef.current && "frameRate" in videoTrackRef.current.getCapabilities()) {
-      console.log("Setting frameRate", value);
-      videoTrackRef.current.applyConstraints({ advanced: [{ frameRate: value } as any] });
-    }
-  }
-
-  function handleWidthChange(value: number) {
-    if (videoTrackRef.current && "width" in videoTrackRef.current.getCapabilities()) {
-      console.log("Setting width", value);
-      videoTrackRef.current.applyConstraints({ advanced: [{ width: value } as any] });
-    }
-  }
-
-  function handleHeightChange(value: number) {
-    if (videoTrackRef.current && "height" in videoTrackRef.current.getCapabilities()) {
-      console.log("Setting height", value);
-      videoTrackRef.current.applyConstraints({ advanced: [{ height: value } as any] });
-    }
-  }
-
-  function handleFocusDistanceChange(value: number) {
-    if (videoTrackRef.current && "focusDistance" in videoTrackRef.current.getCapabilities()) {
-      console.log("Setting focusDistance", value);
-      videoTrackRef.current.applyConstraints({ advanced: [{ focusDistance: value } as any] });
-    }
-  }
-
-  function handleTrackTwoHandsChange(value: boolean) {
-    handLandmarkerWorkerRef.current?.postMessage({ type: "setNumHands", data: value ? 2 : 1 });
-  }
-
-  if (!device) return <EmptyBox height={height}>No camera selected</EmptyBox>;
+  if (!device)
+    return (
+      <>
+        <EmptyBox height={height}>No camera selected</EmptyBox>
+        <CameraSettings
+          videoTrack={videoTrackRef.current || null}
+          handLandmarkerWorker={handLandmarkerWorkerRef.current || null}
+        />
+      </>
+    );
 
   return (
     <>
       <RecordButton isRecording={isRecording} onClick={handleRecord} />
       <CameraPreview stream={streamRef.current} canvasRef={canvasRef} height={height} />
-      <CameraSettingSwitch
-        label="trackTwoHands"
-        value={trackTwoHands}
-        setValue={setTrackTwoHands}
-        onChange={handleTrackTwoHandsChange}
-      />
-      <CameraSettingSlider
-        label="brightness"
-        value={brightness}
-        setValue={setBrightness}
-        min={0}
-        max={255}
-        step={1}
-        onChangeEnd={handleBrightnessChange}
-      />
-      <CameraSettingSlider
-        label="contrast"
-        value={contrast}
-        setValue={setContrast}
-        min={0}
-        max={255}
-        step={1}
-        onChangeEnd={handleContrastChange}
-      />
-      <CameraSettingSlider
-        label="saturation"
-        value={saturation}
-        setValue={setSaturation}
-        min={0}
-        max={255}
-        step={1}
-        onChangeEnd={handleSaturationChange}
-      />
-      <CameraSettingSlider
-        label="sharpness"
-        value={sharpness}
-        setValue={setSharpness}
-        min={0}
-        max={255}
-        step={1}
-        onChangeEnd={handleSharpnessChange}
-      />
-      <CameraSettingSwitch
-        label="autoexposure"
-        value={autoexposure}
-        setValue={setAutoexposure}
-        onChange={handleAutoexposureChange}
-      />
-      <CameraSettingSlider
-        label="exposureTime"
-        value={exposureTime}
-        setValue={setExposureTime}
-        min={5}
-        max={2500}
-        step={5}
-        onChangeEnd={handleExposureTimeChange}
-      />
-      <CameraSettingSlider
-        label="exposureCompensation"
-        value={exposureCompensation}
-        setValue={setExposureCompensation}
-        min={0}
-        max={255}
-        step={1}
-        onChangeEnd={handleExposureCompensationChange}
-      />
-      <CameraSettingSwitch
-        label="autofocus"
-        value={autofocus}
-        setValue={setAutofocus}
-        onChange={handleAutofocusChange}
-      />
-      <CameraSettingSlider
-        label="focusDistance"
-        value={focusDistance}
-        setValue={setFocusDistance}
-        min={0}
-        max={250}
-        step={5}
-        onChangeEnd={handleFocusDistanceChange}
-      />
-      <CameraSettingSlider
-        label="frameRate"
-        value={frameRate}
-        setValue={setFrameRate}
-        min={1}
-        max={60}
-        step={1}
-        onChangeEnd={handleFrameRateChange}
-      />
-      <CameraSettingSlider
-        label="width"
-        value={webcamWidth}
-        setValue={setWebcamWidth}
-        min={0}
-        max={1920}
-        step={10}
-        onChangeEnd={handleWidthChange}
-      />
-      <CameraSettingSlider
-        label="height"
-        value={webcamHeight}
-        setValue={setWebcamHeight}
-        min={0}
-        max={1080}
-        step={10}
-        onChangeEnd={handleHeightChange}
+      <CameraSettings
+        videoTrack={videoTrackRef.current || null}
+        handLandmarkerWorker={handLandmarkerWorkerRef.current || null}
       />
     </>
   );
