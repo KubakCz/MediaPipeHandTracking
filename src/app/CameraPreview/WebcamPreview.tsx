@@ -129,7 +129,7 @@ export default function WebcamPreview({ device, directoryHandle, height }: Webca
   const recordedChunksRef = useRef<EncodedVideoChunk[]>([]);
 
   // Hand visualization
-  const handLandmarkerRef = useRef<HandLandmarker>(new HandLandmarker());
+  const handLandmarkerRef = useRef<HandLandmarker>();
   const canvasRef = useRef<HTMLCanvasElement>(null);
 
   // Recording
@@ -144,6 +144,9 @@ export default function WebcamPreview({ device, directoryHandle, height }: Webca
   useEffect(() => {
     console.log("Initializing HandLandmarker");
     // Initialize handLandmarker
+    handLandmarkerRef.current = new HandLandmarker(
+      new Worker(new URL("HandLandmarker/HandLandmarkerWorker.ts", import.meta.url))
+    );
     handLandmarkerRef.current
       .init()
       .then(() => {
@@ -184,11 +187,11 @@ export default function WebcamPreview({ device, directoryHandle, height }: Webca
 
     // HandLandmarker processing
     if (
-      handLandmarkerRef.current.initialized &&
-      !handLandmarkerRef.current.processingFrame && // Only start processing if the previous frame is done
-      !handLandmarkerRef.current.processingVideo // Only start processing if no video is being processed
+      handLandmarkerRef.current!.initialized &&
+      !handLandmarkerRef.current!.processingFrame && // Only start processing if the previous frame is done
+      !handLandmarkerRef.current!.processingVideo // Only start processing if no video is being processed
     ) {
-      handLandmarkerRef.current.processFrame(frame).then((hands) => {
+      handLandmarkerRef.current!.processFrame(frame).then((hands) => {
         drawHands(hands, canvasRef.current!.getContext("2d")!);
       });
     }
@@ -230,10 +233,10 @@ export default function WebcamPreview({ device, directoryHandle, height }: Webca
     console.log("Recording stopped");
 
     // Process the recorded video and save the result
-    if (!handLandmarkerRef.current.initialized || handLandmarkerRef.current.processingVideo)
+    if (!handLandmarkerRef.current!.initialized || handLandmarkerRef.current!.processingVideo)
       throw new Error("HandLandmarker not ready for video processing");
 
-    handLandmarkerRef.current.processVideo(recordedChunksRef.current).then(async (hands) => {
+    handLandmarkerRef.current!.processVideo(recordedChunksRef.current).then(async (hands) => {
       // Save hand data
       let fileWriter: FileSystemWritableFileStream | undefined;
       try {
@@ -257,7 +260,7 @@ export default function WebcamPreview({ device, directoryHandle, height }: Webca
     if (isRecording) throw new Error("Recording already in progress");
     if (!streamRef.current) throw new Error("No stream to record");
     if (!directoryHandle) throw new Error("No directory to save recording");
-    if (handLandmarkerRef.current.processingVideo)
+    if (handLandmarkerRef.current!.processingVideo)
       throw new Error("HandLandmarker processing video");
 
     const track = streamRef.current.getVideoTracks()[0];
@@ -365,7 +368,7 @@ export default function WebcamPreview({ device, directoryHandle, height }: Webca
         <EmptyBox height={height}>No camera selected</EmptyBox>
         <CameraSettings
           videoTrack={videoTrackRef.current || null}
-          handLandmarker={handLandmarkerRef.current}
+          handLandmarker={handLandmarkerRef.current!}
         />
       </>
     );
@@ -376,7 +379,7 @@ export default function WebcamPreview({ device, directoryHandle, height }: Webca
       <CameraPreview stream={streamRef.current} canvasRef={canvasRef} height={height} />
       <CameraSettings
         videoTrack={videoTrackRef.current || null}
-        handLandmarker={handLandmarkerRef.current}
+        handLandmarker={handLandmarkerRef.current!}
       />
     </>
   );

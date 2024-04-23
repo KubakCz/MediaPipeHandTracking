@@ -41,8 +41,8 @@ export class HandLandmarker {
     return this.workerSettingNumHands;
   }
 
-  constructor() {
-    this.worker = new Worker(new URL("./HandLandmarkerWorker.ts", import.meta.url));
+  constructor(worker: Worker) {
+    this.worker = worker;
     this.workerInitialized = false;
     this.workerProcessingFrame = false;
     this.workerProcessingVideo = false;
@@ -89,7 +89,10 @@ export class HandLandmarker {
       return;
     }
 
-    const response = await this.sendMessage(new messages.InitMessage(), messages.MessageType.InitResponse);
+    const response = await this.sendMessage(
+      new messages.InitMessage(),
+      messages.MessageType.InitResponse
+    );
     if (response.result === messages.Result.Ok) {
       this.workerInitialized = true;
     } else {
@@ -158,10 +161,10 @@ export class HandLandmarker {
 
     this.workerProcessingFrame = true;
     try {
-      const response = await this.sendMessage(
+      const response = (await this.sendMessage(
         new messages.FrameMessage(videoFrame),
         messages.MessageType.FrameResponse
-      ) as messages.FrameResponse;
+      )) as messages.FrameResponse;
       if (response.result === messages.Result.Ok) {
         return response.data!;
       }
@@ -187,10 +190,10 @@ export class HandLandmarker {
 
     this.workerProcessingVideo = true;
     try {
-      const response = await this.sendMessage(
+      const response = (await this.sendMessage(
         new messages.VideoMessage(video),
         messages.MessageType.VideoResponse
-      ) as messages.VideoResponse;
+      )) as messages.VideoResponse;
       if (response.result === messages.Result.Ok) {
         return response.data!;
       }
