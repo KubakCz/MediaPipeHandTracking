@@ -57,7 +57,6 @@ export default function Preview({
           className="output_canvas"
           ref={(canvas) => {
             if (canvas) {
-              console.log("hello -----------------------");
               const boundingRect = canvas.getBoundingClientRect();
               canvas.width = boundingRect.width;
               canvas.height = boundingRect.height;

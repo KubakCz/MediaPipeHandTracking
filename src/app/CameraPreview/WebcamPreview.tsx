@@ -1,8 +1,5 @@
-import { Box, Button } from "@chakra-ui/react";
 import { CSSProperties, useState, useEffect, useRef, useCallback } from "react";
-import { FileSystemWritableFileStreamTarget, Muxer } from "webm-muxer";
 import { drawHands } from "./Drawing";
-import { getEncoderConfig, getMuxerOptions } from "./VideoSettings";
 import { handDataToJSON } from "./HandDataToJson";
 import CameraSettings from "./CameraSettings/CameraSettings";
 import { HandLandmarker } from "./HandLandmarker/HandLandmarker";
@@ -11,6 +8,9 @@ import Preview from "./Preview/Preview";
 import RecordButton from "./RecordButton";
 import { VideoProcessor } from "./VideoProcessing";
 import { Resolution } from "./CameraSettings/Resolution";
+import * as requests from "../requests/requests";
+import { useToast } from "@chakra-ui/react";
+import { dateTimeString } from "../HelperFunctions";
 
 interface WebcamPreviewProps {
   device: InputDeviceInfo | undefined;
@@ -25,6 +25,7 @@ export default function WebcamPreview({ device, directoryHandle, height }: Webca
   const [recordingInProgress, setRecordingInProgress] = useState(false); // Recording state - true from startRecording to stopRecording
   const [processingInProgress, setProcessingInProgress] = useState(false); // Processing state - true while processing video
   const [resolution, setResolution] = useState(new Resolution(1280, 720));
+  const [recordingOnServer, setRecordingOnServer] = useState<boolean>();
 
   // Hand visualization
   const handLandmarkerRef = useRef<HandLandmarker>();
@@ -123,11 +124,62 @@ export default function WebcamPreview({ device, directoryHandle, height }: Webca
    * Starts video recording.
    */
   async function startRecording() {
+    if (recordingInProgress) throw new Error("Recording already in progress");
+    if (!directoryHandle) throw new Error("No directory selected");
+
+    // Check recording status of the server
+    let connectionSettings = await requests.getConnectionSettings();
+    if (connectionSettings) {
+      // Connected to a server
+      const recordingStatus = await requests.isRecording();
+      if (recordingStatus === undefined) {
+        // Server connected, but failed to get recording status
+        toast({
+          title: "Failed to get recording status",
+          description:
+            "Failed to get recording status from the connected server. Recoring will start only on the client side.",
+          status: "warning",
+          duration: 10000,
+          isClosable: true,
+        });
+        connectionSettings = null;
+      } else if (recordingStatus === true) {
+        // Recording already in progress on the server
+        toast({
+          title: "Recording already in progress",
+          description:
+            "Recording is already in progress on the server. Please stop the recording on the server first.",
+          status: "error",
+          duration: 10000,
+          isClosable: true,
+        });
+        return;
+      } else {
+        // Else recording status is synced with the server => start recording on the server
+        requests
+          .setRecording(true)
+          .then((response) => {
+            setRecordingOnServer(true);
+          })
+          .catch((error) => {
+            const message = error.response?.data || error.message;
+            toast({
+              title: "Failed to start recording",
+              description: `Failed to start recording on the server: ${message}`,
+              status: "error",
+              duration: 10000,
+              isClosable: true,
+            });
+          });
+      }
+    }
+
     await videoProcessorRef.current.startRecording(
-      directoryHandle!,
+      directoryHandle,
       undefined, // TODO: Add file name input (optional)
       (e) => console.error(e)
     );
+
     setRecordingInProgress(true);
   }
 
@@ -136,8 +188,25 @@ export default function WebcamPreview({ device, directoryHandle, height }: Webca
    * Processes the recorded video with HandLandmarker and saves the hand data.
    */
   async function stopRecording() {
-    const vp = videoProcessorRef.current;
+    if (!recordingInProgress) throw new Error("Recording not in progress");
 
+    // Stop recording on the server
+    if (recordingOnServer) {
+      setRecordingOnServer(false);
+      requests.setRecording(false).catch((error) => {
+        const message = error.response?.data || error.message;
+        toast({
+          title: "Failed to stop recording",
+          description: `Failed to stop recording on the server: ${message}`,
+          status: "error",
+          duration: 10000,
+          isClosable: true,
+        });
+      });
+    }
+
+    // Stop recoring
+    const vp = videoProcessorRef.current;
     await vp.stopRecording();
     console.log(
       "Recording stopped, avg fps:",
@@ -175,6 +244,8 @@ export default function WebcamPreview({ device, directoryHandle, height }: Webca
         setProcessingInProgress(false); // Reset processing state
       });
   }
+
+  const toast = useToast();
 
   return (
     <>
