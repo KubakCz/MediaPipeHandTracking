@@ -1,7 +1,7 @@
 import axios, { AxiosResponse } from "axios";
 import { ConnectionSettings } from "./models";
 
-const BASE_URL = "https://localhost:7095";
+const BASE_URL = "http://localhost:5184";
 const TIMEOUT = 1000;
 
 /**
