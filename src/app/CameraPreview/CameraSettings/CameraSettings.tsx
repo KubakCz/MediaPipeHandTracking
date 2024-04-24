@@ -12,13 +12,18 @@ import { HandLandmarker } from "../HandLandmarker/HandLandmarker";
 interface CameraSettingsProps {
   videoTrack: MediaStreamTrack | null;
   handLandmarker: HandLandmarker | null;
+  onResolutionChange?: (resolution: Resolution) => void;
 }
 
 /**
  * Camera settings form component.
  * Controls settings of the provided video track and hand tracking worker.
  */
-export default function CameraSettings({ videoTrack, handLandmarker }: CameraSettingsProps) {
+export default function CameraSettings({
+  videoTrack,
+  handLandmarker,
+  onResolutionChange,
+}: CameraSettingsProps) {
   // #region State variables
   const [videoTrackCapabilities, setVideoTrackCapabilities] =
     useState<MediaTrackCapabilities | null>(null);
@@ -94,8 +99,9 @@ export default function CameraSettings({ videoTrack, handLandmarker }: CameraSet
         setSharpness(settings[CameraCapabilities.Sharpness] as number);
 
       // Resolution and Frame Rate
-      setResolution(new Resolution(settings.width!, settings.height!));
-      setFrameRate(settings.frameRate!);
+      if ("width" in settings && "height" in settings)
+        setResolution(new Resolution(settings.width!, settings.height!));
+      if ("frameRate" in settings) setFrameRate(settings.frameRate!);
     }
   }, [videoTrack]);
 
@@ -119,9 +125,11 @@ export default function CameraSettings({ videoTrack, handLandmarker }: CameraSet
         setSettingNumHands(false);
       });
   }, [handLandmarker, trackTwoHands]);
+
   // #endregion useEffect
 
   // #region Change handlers
+
   // Tracking
   function handleTrackTwoHandsChange(trackTwoHands: boolean) {
     if (!handLandmarker || handLandmarker.settingNumHands) return;
@@ -212,13 +220,13 @@ export default function CameraSettings({ videoTrack, handLandmarker }: CameraSet
   // Resolution and Frame Rate
   function handleResolutionChange(resolution: Resolution) {
     setResolution(resolution);
-    console.log(`Setting resolution to ${resolution.width}x${resolution.height}`);
     videoTrack!
       .applyConstraints({ width: resolution.width, height: resolution.height })
       .then(() => {
         const settings = videoTrack!.getSettings();
         console.log(`Resolution set to ${settings.width}x${settings.height}`);
       });
+    if (onResolutionChange) onResolutionChange(resolution);
   }
 
   function handleFrameRateChange(frameRate: number) {
