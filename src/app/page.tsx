@@ -1,14 +1,13 @@
 "use client";
 
 import { useEffect, useState, useCallback, use } from "react";
-import { Box, Button, ChakraProvider, Flex, VStack } from "@chakra-ui/react";
+import { ChakraProvider, Flex, VStack } from "@chakra-ui/react";
 import DeviceSelect from "./DeviceSelect";
 import WebcamPreview from "./CameraPreview/WebcamPreview";
 import DirecotrySelect from "./DirectorySelect";
-import ConnectionSettings from "./NatNetConnection/ConnectionSettings";
-import CameraSettings from "./CameraPreview/CameraSettings/CameraSettings";
-import { Resolution } from "./CameraPreview/CameraSettings/Resolution";
-import { Black_Ops_One } from "next/font/google";
+import { Resolution } from "./RightMenu/CameraSettings/Resolution";
+import RightMenu from "./RightMenu/RightMenu";
+import { theme } from "./theme";
 
 export default function App() {
   const [devices, setDevices] = useState<InputDeviceInfo[]>([]);
@@ -106,7 +105,7 @@ export default function App() {
 
   return (
     <>
-      <ChakraProvider>
+      <ChakraProvider theme={theme}>
         <Flex
           direction="row"
           justifyContent="flex-end"
@@ -130,14 +129,8 @@ export default function App() {
               onDirectorySelect={handleDirectorySelect}
             />
           </VStack>
-          <VStack p="5" borderLeftWidth={2} borderColor={"black"} overflowY="scroll" h="100vh">
-            <ConnectionSettings />
-            <CameraSettings
-              videoTrack={videoTrack || null}
-              // handLandmarker={handLandmarkerRef.current!} // TO BE FIXED
-              handLandmarker={null}
-              onResolutionChange={setResolution}
-            />
+          <VStack p="5" borderLeftWidth={2} borderColor="gray.200" overflowY="scroll" h="100vh">
+            <RightMenu videoTrack={videoTrack} onResolutionChange={setResolution} />
           </VStack>
         </Flex>
       </ChakraProvider>

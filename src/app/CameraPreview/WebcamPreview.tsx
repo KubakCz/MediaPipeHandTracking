@@ -1,13 +1,13 @@
 import { CSSProperties, useState, useEffect, useRef, useCallback } from "react";
 import { drawHands } from "./Drawing";
 import { handDataToJSON } from "./HandDataToJson";
-import CameraSettings from "./CameraSettings/CameraSettings";
+import CameraSettings from "../RightMenu/CameraSettings/CameraSettings";
 import { HandLandmarker } from "./HandLandmarker/HandLandmarker";
 import NoPreview from "./Preview/NoPreview";
 import Preview from "./Preview/Preview";
 import RecordButton from "./RecordButton";
 import { VideoProcessor } from "./VideoProcessing";
-import { Resolution } from "./CameraSettings/Resolution";
+import { Resolution } from "../RightMenu/CameraSettings/Resolution";
 import * as requests from "../requests/requests";
 import { useToast } from "@chakra-ui/react";
 import { dateTimeString } from "../HelperFunctions";

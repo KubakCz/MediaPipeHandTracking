@@ -4,7 +4,7 @@ import CameraSettingsSwitch from "./CameraSettingSwitch";
 import CameraSettingSlider from "./CameraSettingSlider";
 import CameraSettingsDropdown from "./CameraSettingsDropdown";
 import { RESOLUTIONS, Resolution } from "./Resolution";
-import { HandLandmarker } from "../HandLandmarker/HandLandmarker";
+import { HandLandmarker } from "../../CameraPreview/HandLandmarker/HandLandmarker";
 import { VStack } from "@chakra-ui/react";
 
 /**

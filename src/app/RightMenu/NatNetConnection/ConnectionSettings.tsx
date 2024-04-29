@@ -1,9 +1,9 @@
 import { useEffect, useState } from "react";
 import IPInput from "./IPInput";
 import PortInput from "./PortInput";
-import { ConnectionType, ConnectionSettings } from "../requests/models";
+import { ConnectionType, ConnectionSettings } from "../../requests/models";
 import { Button, HStack, Select, Spinner, VStack, useToast } from "@chakra-ui/react";
-import * as requests from "../requests/requests";
+import * as requests from "../../requests/requests";
 
 /**
  * Connection settings form component.
