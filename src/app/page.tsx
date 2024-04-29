@@ -1,16 +1,22 @@
 "use client";
 
 import { useEffect, useState, useCallback, use } from "react";
-import { Button, ChakraProvider } from "@chakra-ui/react";
+import { Box, Button, ChakraProvider, Flex, VStack } from "@chakra-ui/react";
 import DeviceSelect from "./DeviceSelect";
 import WebcamPreview from "./CameraPreview/WebcamPreview";
 import DirecotrySelect from "./DirectorySelect";
 import ConnectionSettings from "./NatNetConnection/ConnectionSettings";
+import CameraSettings from "./CameraPreview/CameraSettings/CameraSettings";
+import { Resolution } from "./CameraPreview/CameraSettings/Resolution";
+import { Black_Ops_One } from "next/font/google";
 
 export default function App() {
   const [devices, setDevices] = useState<InputDeviceInfo[]>([]);
   const [selectedDevice, setSelectedDevice] = useState<InputDeviceInfo | undefined>();
+  const [videoTrack, setVideoTrack] = useState<MediaStreamTrack | null | undefined>();
   const [directoryHandle, setDirectoryHandle] = useState<FileSystemDirectoryHandle | undefined>();
+
+  const [resolution, setResolution] = useState(new Resolution(1280, 720));
 
   const handleUpdateDevices = useCallback(() => {
     navigator.mediaDevices.enumerateDevices().then((allDevices) => {
@@ -34,6 +40,46 @@ export default function App() {
 
   function handleDeviceChange(selectedDevice: InputDeviceInfo | undefined) {
     setSelectedDevice(selectedDevice);
+    console.log(selectedDevice);
+    // TO BE FIXEd
+    // if (videoProcessorRef.current.isRecording)
+    //   throw new Error("Cannot switch camera while recording");
+
+    // // Stop old camera
+    // if (videoProcessorRef.current.isProcessing) {
+    //   videoProcessorRef.current.stopProcessing();
+    //   setVideoTrack(null);
+    // }
+    setVideoTrack(undefined);
+
+    if (!selectedDevice) return;
+
+    // Set new camera
+    const deviceCapabilities = selectedDevice.getCapabilities();
+    const maxFps = deviceCapabilities.frameRate?.max || 30;
+    const maxWidth = deviceCapabilities.width?.max || 1280;
+    const maxHeight = deviceCapabilities.height?.max || 720;
+    const constraints: MediaStreamConstraints = {
+      video: {
+        deviceId: selectedDevice.deviceId,
+        width: 1920 <= maxWidth ? 1920 : 1280, // Use 1080p if available, otherwise 720p
+        height: 1080 <= maxHeight ? 1080 : 720,
+        frameRate: maxFps, // Use the highest possible frame rate
+      },
+    };
+    setVideoTrack(null);
+    navigator.mediaDevices
+      .getUserMedia(constraints)
+      .then((stream) => {
+        // Set up video processor
+        // TO BE FIXED
+        // videoProcessorRef.current.startProcessing(stream);
+        setVideoTrack(stream.getVideoTracks()[0]);
+      })
+      .catch((error) => {
+        setVideoTrack(undefined);
+        console.error("Error getting user media", error);
+      });
   }
 
   useEffect(() => {
@@ -61,17 +107,39 @@ export default function App() {
   return (
     <>
       <ChakraProvider>
-        <DeviceSelect
-          devices={devices}
-          onDeviceChange={handleDeviceChange}
-          onClick={handleUpdateDevices}
-        />
-        <DirecotrySelect
-          directoryHandle={directoryHandle}
-          onDirectorySelect={handleDirectorySelect}
-        />
-        <WebcamPreview device={selectedDevice} directoryHandle={directoryHandle} />
-        <ConnectionSettings />
+        <Flex
+          direction="row"
+          justifyContent="flex-end"
+          alignItems="flex-start"
+          columnGap={10}
+          h="100%"
+        >
+          <VStack justifyContent="center" flexGrow={2} h="100%">
+            <DeviceSelect
+              devices={devices}
+              onDeviceChange={handleDeviceChange}
+              onClick={handleUpdateDevices}
+            />
+            <WebcamPreview
+              videoTrack={videoTrack}
+              directoryHandle={directoryHandle}
+              resolution={resolution}
+            />
+            <DirecotrySelect
+              directoryHandle={directoryHandle}
+              onDirectorySelect={handleDirectorySelect}
+            />
+          </VStack>
+          <VStack p="5" borderLeftWidth={2} borderColor={"black"} overflowY="scroll" h="100vh">
+            <ConnectionSettings />
+            <CameraSettings
+              videoTrack={videoTrack || null}
+              // handLandmarker={handLandmarkerRef.current!} // TO BE FIXED
+              handLandmarker={null}
+              onResolutionChange={setResolution}
+            />
+          </VStack>
+        </Flex>
       </ChakraProvider>
     </>
   );

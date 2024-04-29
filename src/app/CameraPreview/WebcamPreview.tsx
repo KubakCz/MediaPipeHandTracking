@@ -13,18 +13,22 @@ import { useToast } from "@chakra-ui/react";
 import { dateTimeString } from "../HelperFunctions";
 
 interface WebcamPreviewProps {
-  device: InputDeviceInfo | undefined;
+  videoTrack: MediaStreamTrack | null | undefined;
   directoryHandle: FileSystemDirectoryHandle | undefined;
+  resolution: Resolution;
   height?: CSSProperties["height"];
 }
 
-export default function WebcamPreview({ device, directoryHandle, height }: WebcamPreviewProps) {
+export default function WebcamPreview({
+  videoTrack,
+  directoryHandle,
+  resolution,
+  height,
+}: WebcamPreviewProps) {
   // Video processing and recording
   const videoProcessorRef = useRef<VideoProcessor>(new VideoProcessor(handleFrameProcessed));
-  const [videoTrack, setVideoTrack] = useState<MediaStreamTrack | null>(null); // Video track for camera settings
   const [recordingInProgress, setRecordingInProgress] = useState(false); // Recording state - true from startRecording to stopRecording
   const [processingInProgress, setProcessingInProgress] = useState(false); // Processing state - true while processing video
-  const [resolution, setResolution] = useState(new Resolution(1280, 720));
   const [recordingOnServer, setRecordingOnServer] = useState<boolean>();
 
   // Hand visualization
@@ -53,46 +57,46 @@ export default function WebcamPreview({ device, directoryHandle, height }: Webca
       });
   }, []);
 
-  /**
-   * Effect switching video stream based on the selected device.
-   */
-  useEffect(() => {
-    console.log(device);
-    if (videoProcessorRef.current.isRecording)
-      throw new Error("Cannot switch camera while recording");
+  // /**
+  //  * Effect switching video stream based on the selected device.
+  //  */
+  // useEffect(() => {
+  //   console.log(device);
+  //   if (videoProcessorRef.current.isRecording)
+  //     throw new Error("Cannot switch camera while recording");
 
-    // Stop old camera
-    if (videoProcessorRef.current.isProcessing) {
-      videoProcessorRef.current.stopProcessing();
-      setVideoTrack(null);
-    }
+  //   // Stop old camera
+  //   if (videoProcessorRef.current.isProcessing) {
+  //     videoProcessorRef.current.stopProcessing();
+  //     setVideoTrack(null);
+  //   }
 
-    if (!device) return;
+  //   if (!device) return;
 
-    // Set new camera
-    const deviceCapabilities = device.getCapabilities();
-    const maxFps = deviceCapabilities.frameRate?.max || 30;
-    const maxWidth = deviceCapabilities.width?.max || 1280;
-    const maxHeight = deviceCapabilities.height?.max || 720;
-    const constraints: MediaStreamConstraints = {
-      video: {
-        deviceId: device.deviceId,
-        width: 1920 <= maxWidth ? 1920 : 1280, // Use 1080p if available, otherwise 720p
-        height: 1080 <= maxHeight ? 1080 : 720,
-        frameRate: maxFps, // Use the highest possible frame rate
-      },
-    };
-    navigator.mediaDevices
-      .getUserMedia(constraints)
-      .then((stream) => {
-        // Set up video processor
-        videoProcessorRef.current.startProcessing(stream);
-        setVideoTrack(stream.getVideoTracks()[0]);
-      })
-      .catch((error) => {
-        console.error("Error getting user media", error);
-      });
-  }, [device]);
+  //   // Set new camera
+  //   const deviceCapabilities = device.getCapabilities();
+  //   const maxFps = deviceCapabilities.frameRate?.max || 30;
+  //   const maxWidth = deviceCapabilities.width?.max || 1280;
+  //   const maxHeight = deviceCapabilities.height?.max || 720;
+  //   const constraints: MediaStreamConstraints = {
+  //     video: {
+  //       deviceId: device.deviceId,
+  //       width: 1920 <= maxWidth ? 1920 : 1280, // Use 1080p if available, otherwise 720p
+  //       height: 1080 <= maxHeight ? 1080 : 720,
+  //       frameRate: maxFps, // Use the highest possible frame rate
+  //     },
+  //   };
+  //   navigator.mediaDevices
+  //     .getUserMedia(constraints)
+  //     .then((stream) => {
+  //       // Set up video processor
+  //       videoProcessorRef.current.startProcessing(stream);
+  //       setVideoTrack(stream.getVideoTracks()[0]);
+  //     })
+  //     .catch((error) => {
+  //       console.error("Error getting user media", error);
+  //     });
+  // }, [device]);
 
   /**
    * Callback to process video frame with HandLandmarker.
@@ -249,28 +253,23 @@ export default function WebcamPreview({ device, directoryHandle, height }: Webca
 
   return (
     <>
-      <RecordButton
+      {/* <RecordButton
         isRecording={recordingInProgress}
         isDisabled={processingInProgress || !directoryHandle}
         onClick={handleRecord}
-      />
-      {device ? (
+      /> */}
+      {videoTrack === undefined ? (
+        <NoPreview aspectRatio={resolution.width / resolution.height} height={height}>
+          No camera selected
+        </NoPreview>
+      ) : (
         <Preview
           stream={videoProcessorRef.current.stream}
           canvasRef={canvasRef}
           aspectRatio={resolution.width / resolution.height}
           height={height}
         />
-      ) : (
-        <NoPreview aspectRatio={resolution.width / resolution.height} height={height}>
-          No camera selected
-        </NoPreview>
       )}
-      <CameraSettings
-        videoTrack={videoTrack || null}
-        handLandmarker={handLandmarkerRef.current!}
-        onResolutionChange={setResolution}
-      />
     </>
   );
 }

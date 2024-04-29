@@ -2,11 +2,11 @@ import { useEffect, useState } from "react";
 import IPInput from "./IPInput";
 import PortInput from "./PortInput";
 import { ConnectionType, ConnectionSettings } from "../requests/models";
-import { Button, Select, Spinner, useToast } from "@chakra-ui/react";
+import { Button, HStack, Select, Spinner, VStack, useToast } from "@chakra-ui/react";
 import * as requests from "../requests/requests";
 
 /**
- * Connection settings form component. 
+ * Connection settings form component.
  * Used to connect to a NatNet server.
  */
 export default function ConnectionSettings() {
@@ -116,7 +116,7 @@ export default function ConnectionSettings() {
 
   const toast = useToast();
   return (
-    <>
+    <VStack alignItems={"left"}>
       <p>{isConnected ? "Connected to NatNet server" : "Not connected to NatNetServer"}</p>
       <IPInput label="Local IP" value={localIP} onChange={setLocalIP} />
       <IPInput label="Server IP" value={serverIP} onChange={setServerIP} />
@@ -138,6 +138,6 @@ export default function ConnectionSettings() {
       <Button onClick={handleConnect} isDisabled={connectingInProgress || !allValid()}>
         {connectingInProgress ? <Spinner /> : "Connect"}
       </Button>
-    </>
+    </VStack>
   );
 }

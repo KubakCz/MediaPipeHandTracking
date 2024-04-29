@@ -5,6 +5,7 @@ import CameraSettingSlider from "./CameraSettingSlider";
 import CameraSettingsDropdown from "./CameraSettingsDropdown";
 import { RESOLUTIONS, Resolution } from "./Resolution";
 import { HandLandmarker } from "../HandLandmarker/HandLandmarker";
+import { VStack } from "@chakra-ui/react";
 
 /**
  * Properties for the camera settings form.
@@ -370,7 +371,7 @@ export default function CameraSettings({
 
   // #region Return
   return (
-    <>
+    <VStack alignItems="left" w="100%">
       <CameraSettingsSwitch
         label="Track Two Hands"
         value={trackTwoHands}
@@ -487,7 +488,7 @@ export default function CameraSettings({
         step={videoTrackCapabilitiesAny?.sharpness?.step}
         onChange={handleSharpnessChange}
       />
-    </>
+    </VStack>
   );
   // #endregion Return
 }
