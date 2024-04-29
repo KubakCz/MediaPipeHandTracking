@@ -230,13 +230,15 @@ export default function WebcamPreview({ device, directoryHandle, height }: Webca
               create: true,
             }
           );
-          const fileWriter = await fileHandle?.createWritable();
+          fileWriter = await fileHandle?.createWritable();
           await fileWriter?.write(handDataToJSON(hands));
-          console.log("Video saved successfully");
         } catch (e) {
           console.error("Error saving hand data", e);
         } finally {
-          if (fileWriter) await fileWriter.close();
+          if (fileWriter) {
+            await fileWriter.close();
+            console.log("Video saved successfully");
+          }
         }
         vp.recordedChunks.length = 0;
       })
