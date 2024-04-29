@@ -1,16 +1,16 @@
 import { CSSProperties, useState, useEffect, useRef, useCallback } from "react";
 import { drawHands } from "./Drawing";
 import { handDataToJSON } from "./HandDataToJson";
-import CameraSettings from "../RightMenu/CameraSettings/CameraSettings";
+import CameraSettings from "../RightMenu/CameraSettings";
 import { HandLandmarker } from "./HandLandmarker/HandLandmarker";
 import NoPreview from "./Preview/NoPreview";
 import Preview from "./Preview/Preview";
 import RecordButton from "./RecordButton";
 import { VideoProcessor } from "./VideoProcessing";
-import { Resolution } from "../RightMenu/CameraSettings/Resolution";
+import { Resolution } from "../utils/resolution";
 import * as requests from "../requests/requests";
 import { useToast } from "@chakra-ui/react";
-import { dateTimeString } from "../HelperFunctions";
+import { dateTimeString } from "../utils/dateTimeFormat";
 
 interface WebcamPreviewProps {
   videoTrack: MediaStreamTrack | null | undefined;

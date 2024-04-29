@@ -1,9 +1,10 @@
 import { useEffect, useState } from "react";
-import IPInput from "./IPInput";
-import PortInput from "./PortInput";
-import { ConnectionType, ConnectionSettings } from "../../requests/models";
-import { Button, HStack, Select, Spinner, VStack, useToast } from "@chakra-ui/react";
-import * as requests from "../../requests/requests";
+import IPInput from "./Components/IPInput";
+import PortInput from "./Components/PortInput";
+import { ConnectionType, ConnectionSettings } from "../requests/models";
+import { Button, Text, Select, Spinner, VStack, useToast } from "@chakra-ui/react";
+import * as requests from "../requests/requests";
+import SettingsDropdown from "./Components/SettingsDropdown";
 
 /**
  * Connection settings form component.
@@ -116,26 +117,25 @@ export default function ConnectionSettings() {
 
   const toast = useToast();
   return (
-    <VStack alignItems={"left"}>
+    <VStack alignItems="stretch" textAlign="left" gap="2">
       <p>{isConnected ? "Connected to NatNet server" : "Not connected to NatNetServer"}</p>
       <IPInput label="Local IP" value={localIP} onChange={setLocalIP} />
       <IPInput label="Server IP" value={serverIP} onChange={setServerIP} />
       <PortInput label="Command Port" value={commandPort} onChange={setCommandPort} />
       <PortInput label="Data Port" value={dataPort} onChange={setDataPort} />
-      <div>
-        <p>Connection Type</p>
-        <Select
-          value={connectionType}
-          onChange={(e) => setConnectionType(e.target.value as ConnectionType)}
-        >
-          {Object.values(ConnectionType).map((type) => (
-            <option key={type} value={type}>
-              {type}
-            </option>
-          ))}
-        </Select>
-      </div>
-      <Button onClick={handleConnect} isDisabled={connectingInProgress || !allValid()}>
+      <SettingsDropdown
+        label="Connection Type"
+        value={connectionType}
+        options={Object.values(ConnectionType)}
+        onChange={setConnectionType}
+      />
+      <Button
+        onClick={handleConnect}
+        isDisabled={connectingInProgress || !allValid()}
+        maxWidth="120"
+        size="md"
+        backgroundColor="brand.400"
+      >
         {connectingInProgress ? <Spinner /> : "Connect"}
       </Button>
     </VStack>

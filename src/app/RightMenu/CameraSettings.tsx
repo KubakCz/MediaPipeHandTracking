@@ -1,10 +1,10 @@
 import { useEffect, useState } from "react";
-import { CameraCapabilities } from "./CameraCapabilities";
-import CameraSettingsSwitch from "./CameraSettingSwitch";
-import CameraSettingSlider from "./CameraSettingSlider";
-import CameraSettingsDropdown from "./CameraSettingsDropdown";
-import { RESOLUTIONS, Resolution } from "./Resolution";
-import { HandLandmarker } from "../../CameraPreview/HandLandmarker/HandLandmarker";
+import { CameraCapabilities } from "../utils/cameraCapabilities";
+import CameraSettingsSwitch from "./CameraSettings/CameraSettingSwitch";
+import SettingSlider from "./Components/SettingSlider";
+import SettingsDropdown from "./Components/SettingsDropdown";
+import { RESOLUTIONS, Resolution } from "../utils/resolution";
+import { HandLandmarker } from "../CameraPreview/HandLandmarker/HandLandmarker";
 import { VStack } from "@chakra-ui/react";
 
 /**
@@ -384,7 +384,7 @@ export default function CameraSettings({
         isDisabled={isAutoexposureDisabled}
         onChange={handleAutoexposureChange}
       />
-      <CameraSettingSlider
+      <SettingSlider
         label="Exposure Time"
         value={exposureTime}
         isDisabled={isExposureTimeDisabled}
@@ -393,7 +393,7 @@ export default function CameraSettings({
         step={videoTrackCapabilitiesAny?.exposureTime?.step}
         onChange={handleExposureTimeChange}
       />
-      <CameraSettingSlider
+      <SettingSlider
         label="Exposure Compensation"
         value={exposureCompensation}
         isDisabled={isExposureCompensationDisabled}
@@ -408,7 +408,7 @@ export default function CameraSettings({
         isDisabled={isAutofocusDisabled}
         onChange={handleAutofocusChange}
       />
-      <CameraSettingSlider
+      <SettingSlider
         label="Focus Distance"
         value={focusDistance}
         isDisabled={isFocusDistanceDisabled}
@@ -423,7 +423,7 @@ export default function CameraSettings({
         isDisabled={isAutoWhiteBalanceDisabled}
         onChange={handleAutoWhiteBalanceChange}
       />
-      <CameraSettingSlider
+      <SettingSlider
         label="Color Temperature"
         value={whiteBalance}
         isDisabled={isWhiteBalanceDisabled}
@@ -432,7 +432,7 @@ export default function CameraSettings({
         step={videoTrackCapabilitiesAny?.colorTemperature?.step}
         onChange={handleWhiteBalanceChange}
       />
-      <CameraSettingsDropdown
+      <SettingsDropdown
         label="Resolution"
         value={resolution}
         isDisabled={isResolutionDisabled}
@@ -443,7 +443,7 @@ export default function CameraSettings({
         }
         onChange={handleResolutionChange}
       />
-      <CameraSettingsDropdown
+      <SettingsDropdown
         label="Frame Rate"
         value={frameRate}
         isDisabled={isFrameRateDisabled}
@@ -452,7 +452,7 @@ export default function CameraSettings({
         }
         onChange={handleFrameRateChange}
       />
-      <CameraSettingSlider
+      <SettingSlider
         label="Brightness"
         value={brightness}
         isDisabled={isBrightnessDisabled}
@@ -461,7 +461,7 @@ export default function CameraSettings({
         step={videoTrackCapabilitiesAny?.brightness?.step}
         onChange={handleBrightnessChange}
       />
-      <CameraSettingSlider
+      <SettingSlider
         label="Contrast"
         value={contrast}
         isDisabled={isContrastDisabled}
@@ -470,7 +470,7 @@ export default function CameraSettings({
         step={videoTrackCapabilitiesAny?.contrast?.step}
         onChange={handleContrastChange}
       />
-      <CameraSettingSlider
+      <SettingSlider
         label="Saturation"
         value={saturation}
         isDisabled={isSaturationDisabled}
@@ -479,7 +479,7 @@ export default function CameraSettings({
         step={videoTrackCapabilitiesAny?.saturation?.step}
         onChange={handleSaturationChange}
       />
-      <CameraSettingSlider
+      <SettingSlider
         label="Sharpness"
         value={sharpness}
         isDisabled={isSharpnessDisabled}

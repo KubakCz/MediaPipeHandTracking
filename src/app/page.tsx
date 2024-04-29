@@ -5,7 +5,7 @@ import { ChakraProvider, Flex, VStack } from "@chakra-ui/react";
 import DeviceSelect from "./DeviceSelect";
 import WebcamPreview from "./CameraPreview/WebcamPreview";
 import DirecotrySelect from "./DirectorySelect";
-import { Resolution } from "./RightMenu/CameraSettings/Resolution";
+import { Resolution } from "./utils/resolution";
 import RightMenu from "./RightMenu/RightMenu";
 import { theme } from "./theme";
 
@@ -111,7 +111,8 @@ export default function App() {
           justifyContent="flex-end"
           alignItems="flex-start"
           columnGap={10}
-          h="100%"
+          w="100vw"
+          h="100vh"
         >
           <VStack justifyContent="center" flexGrow={2} h="100%">
             <DeviceSelect

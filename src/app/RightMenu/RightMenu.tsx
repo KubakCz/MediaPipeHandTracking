@@ -7,9 +7,9 @@ import {
   Box,
   Heading,
 } from "@chakra-ui/react";
-import CameraSettings from "./CameraSettings/CameraSettings";
-import ConnectionSettings from "./NatNetConnection/ConnectionSettings";
-import { Resolution } from "./CameraSettings/Resolution";
+import CameraSettings from "./CameraSettings";
+import ConnectionSettings from "./ConnectionSettings";
+import { Resolution } from "../utils/resolution";
 
 interface RightMenuProps {
   videoTrack: MediaStreamTrack | null | undefined;

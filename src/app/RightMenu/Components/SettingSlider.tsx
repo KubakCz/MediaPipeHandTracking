@@ -1,9 +1,14 @@
-import { Slider, SliderFilledTrack, SliderThumb, SliderTrack } from "@chakra-ui/react";
+import {
+  Slider,
+  SliderFilledTrack,
+  SliderThumb,
+  SliderTrack,
+  Text,
+  VStack,
+} from "@chakra-ui/react";
+import SettingsComponent from "./SettingsComponent";
 
-/**
- * Camera setting slider props.
- */
-interface CameraSettingSliderProps {
+interface SettingSliderProps {
   label: string;
   value: number;
   min?: number;
@@ -15,10 +20,10 @@ interface CameraSettingSliderProps {
 }
 
 /**
- * Camera setting slider component.
+ * Setting slider component.
  * Used to adjust camera settings with a slider.
  */
-export default function CameraSettingSlider({
+export default function SettingSlider({
   label,
   value,
   min,
@@ -27,11 +32,12 @@ export default function CameraSettingSlider({
   isDisabled,
   onChange,
   onChangeEnd,
-}: CameraSettingSliderProps) {
+}: SettingSliderProps) {
   return (
-    <>
-      <label>{label}</label>
+    <SettingsComponent label={label}>
       <Slider
+        size="sm"
+        my="1"
         aria-label="slider-ex-1"
         value={value}
         min={min}
@@ -42,10 +48,10 @@ export default function CameraSettingSlider({
         onChangeEnd={onChangeEnd}
       >
         <SliderTrack>
-          <SliderFilledTrack />
+          <SliderFilledTrack bg="brand.400" />
         </SliderTrack>
         <SliderThumb />
       </Slider>
-    </>
+    </SettingsComponent>
   );
 }

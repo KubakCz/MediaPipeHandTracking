@@ -1,6 +1,6 @@
 import { FileSystemWritableFileStreamTarget, Muxer } from "webm-muxer";
 import { getEncoderConfig, getMuxerOptions } from "./VideoSettings";
-import { dateTimeString } from "../HelperFunctions";
+import { dateTimeString } from "../utils/dateTimeFormat";
 
 /**
  * Class for processing video frames and recording them to a file.
