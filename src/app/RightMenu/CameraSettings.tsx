@@ -226,8 +226,8 @@ export default function CameraSettings({
       .then(() => {
         const settings = videoTrack!.getSettings();
         console.log(`Resolution set to ${settings.width}x${settings.height}`);
+        if (onResolutionChange) onResolutionChange(resolution);
       });
-    if (onResolutionChange) onResolutionChange(resolution);
   }
 
   function handleFrameRateChange(frameRate: number) {

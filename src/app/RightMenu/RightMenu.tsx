@@ -13,7 +13,7 @@ import { Resolution } from "../utils/resolution";
 
 interface RightMenuProps {
   videoTrack: MediaStreamTrack | null | undefined;
-  onResolutionChange: (resolution: Resolution) => void;
+  onResolutionChange?: (resolution: Resolution) => void;
 }
 
 export default function RightMenu({ videoTrack, onResolutionChange }: RightMenuProps) {

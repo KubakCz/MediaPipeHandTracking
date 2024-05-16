@@ -5,8 +5,7 @@ import { CSSProperties } from "react";
  * Component to display when there is no camera preview available.
  */
 export default function NoPreview({
-  aspectRatio = 4 / 3,
-  height = "480px",
+  aspectRatio = 16 / 9,
   children,
 }: {
   aspectRatio?: number;
@@ -15,8 +14,10 @@ export default function NoPreview({
 }) {
   return (
     <Box
-      h={height}
       aspectRatio={aspectRatio}
+      h="480px"
+      // w="100%"
+      // maxHeight="calc(100vh - 500px)"
       display="flex"
       alignItems="center"
       justifyContent="center"

@@ -7,7 +7,7 @@ import { dateTimeString } from "../utils/dateTimeFormat";
  */
 export class VideoProcessor {
   // Processing
-  private _stream: MediaStream | null = null;
+  private _videoTrack: MediaStreamTrack | null = null;
   private _reader: ReadableStreamDefaultReader<VideoFrame> | null = null;
 
   // Recording
@@ -21,12 +21,12 @@ export class VideoProcessor {
 
   // #region Getters
 
-  public get stream(): MediaStream | null {
-    return this._stream;
+  public get stream(): MediaStreamTrack | null {
+    return this._videoTrack;
   }
 
   public get isProcessing(): boolean {
-    return this._stream !== null;
+    return this._videoTrack !== null;
   }
 
   public get isRecording(): boolean {
@@ -57,14 +57,13 @@ export class VideoProcessor {
 
   /**
    * Starts grabbing video frames from a stream and processing them.
-   * @param stream - The stream to take video frames from.
+   * @param videoTrack - The video track to take video frames from.
    */
-  startProcessing(stream: MediaStream) {
-    if (this._stream) throw new Error("Already processing video frames");
+  startProcessing(videoTrack: MediaStreamTrack) {
+    if (this._videoTrack) throw new Error("Already processing video frames");
 
-    this._stream = stream;
-    const track = stream.getVideoTracks()[0];
-    const trackProcessor = new MediaStreamTrackProcessor({ track });
+    this._videoTrack = videoTrack;
+    const trackProcessor = new MediaStreamTrackProcessor({ track: videoTrack });
     this._reader = trackProcessor.readable.getReader();
     this.readerLoop();
   }
@@ -73,12 +72,11 @@ export class VideoProcessor {
    * Stops processing video frames.
    */
   stopProcessing() {
-    if (!this._stream) throw new Error("No stream to stop processing");
+    if (!this._videoTrack) throw new Error("No stream to stop processing");
 
     this._reader?.cancel();
     this._reader = null;
-    this._stream.getTracks().forEach((track) => track.stop());
-    this._stream = null;
+    this._videoTrack = null;
   }
 
   /**
@@ -122,11 +120,10 @@ export class VideoProcessor {
     onError?: (error: DOMException) => void
   ) {
     if (this._isRecording) throw new Error("Recording already in progress");
-    if (!this._stream) throw new Error("No stream to record");
+    if (!this._videoTrack) throw new Error("No track to record");
 
     const currentTime = Date.now();
-    const track = this._stream.getVideoTracks()[0];
-    const trackSettings = track.getSettings();
+    const trackSettings = this._videoTrack.getSettings();
 
     // Create destination file and muxer
     const videoFileHandle = await directoryHandle.getFileHandle(

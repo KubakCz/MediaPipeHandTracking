@@ -7,8 +7,6 @@ import NoPreview from "./NoPreview";
 interface PreviewProps {
   stream: MediaStream | null;
   canvasRef: React.MutableRefObject<HTMLCanvasElement | null>;
-  aspectRatio?: number;
-  height?: CSSProperties["height"];
 }
 
 /**
@@ -18,23 +16,16 @@ interface PreviewProps {
  * @param height - Height of the preview.
  * @returns Camera preview component.
  */
-export default function Preview({
-  stream,
-  canvasRef,
-  aspectRatio = 4 / 3,
-  height = "480px",
-}: PreviewProps) {
-  // // Resize the canvas to match the preview size
-  // if (canvasRef.current) {
-  //   canvasRef.current.width = canvasRef.current.offsetWidth;
-  //   canvasRef.current.height = canvasRef.current.offsetHeight;
-  // }
-
+export default function Preview({ stream, canvasRef }: PreviewProps) {
   // It may take some time for the stream to be ready
-  if (!stream) return <NoPreview height={height}>Waiting for the camera...</NoPreview>;
+  if (!stream) return <NoPreview>Waiting for the camera...</NoPreview>;
+
+  const videoTrack = stream.getVideoTracks()[0];
+  const settings = videoTrack.getSettings();
+  const aspectRatio = settings.aspectRatio || 16 / 9;
 
   return (
-    <div style={{ height: height, aspectRatio: aspectRatio }}>
+    <div style={{ aspectRatio: aspectRatio, height: "480px" /* width: "100%" */ }}>
       <div style={{ position: "relative", width: "100%", height: "100%" }}>
         <video
           autoPlay
@@ -44,8 +35,8 @@ export default function Preview({
             position: "absolute",
             left: "0px",
             top: "0px",
-            height: height,
             aspectRatio: aspectRatio,
+            height: "100%",
           }}
           ref={(video) => {
             if (video) {
@@ -67,8 +58,8 @@ export default function Preview({
             position: "absolute",
             left: "0px",
             top: "0px",
-            height: height,
             aspectRatio: aspectRatio,
+            height: "100%",
           }}
         ></canvas>
       </div>
