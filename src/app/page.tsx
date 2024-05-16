@@ -100,7 +100,11 @@ export default function App() {
             </VStack>
           </VStack>
           <VStack p="5" borderLeftWidth={2} borderColor="gray.200" overflowY="scroll" h="100vh">
-            <RightMenu videoTrack={getCurrentVideoTrack()} onResolutionChange={forceUpdate} />
+            <RightMenu
+              videoTrack={getCurrentVideoTrack()}
+              onResolutionChange={forceUpdate}
+              isDisabled={isRecording}
+            />
           </VStack>
         </Flex>
       </ChakraProvider>

@@ -13,10 +13,11 @@ import { Resolution } from "../utils/resolution";
 
 interface RightMenuProps {
   videoTrack: MediaStreamTrack | null | undefined;
+  isDisabled?: boolean;
   onResolutionChange?: (resolution: Resolution) => void;
 }
 
-export default function RightMenu({ videoTrack, onResolutionChange }: RightMenuProps) {
+export default function RightMenu({ videoTrack, onResolutionChange, isDisabled }: RightMenuProps) {
   return (
     <Accordion allowToggle width="300px">
       <AccordionItem>
@@ -44,6 +45,7 @@ export default function RightMenu({ videoTrack, onResolutionChange }: RightMenuP
             // handLandmarker={handLandmarkerRef.current!} // TO BE FIXED
             handLandmarker={null}
             onResolutionChange={onResolutionChange}
+            isDisabled={isDisabled}
           />
         </AccordionPanel>
       </AccordionItem>
