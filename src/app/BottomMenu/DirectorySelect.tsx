@@ -1,5 +1,4 @@
-import { Button, Input } from "@chakra-ui/react";
-import { on } from "events";
+import { Button, HStack, Input, VStack } from "@chakra-ui/react";
 
 interface DirectorySelectProps {
   directoryHandle: FileSystemDirectoryHandle | undefined;
@@ -28,25 +27,19 @@ export default function DirectorySelect({
   async function handleDirectoryPathChange(event: React.ChangeEvent<HTMLInputElement>) {}
 
   return (
-    <div
-      style={{
-        margin: "16px",
-        display: "flex",
-        gap: "16px",
-        justifyContent: "flex-start",
-        alignItems: "baseline",
-      }}
-    >
+    <VStack alignItems="flex-start">
       <p>Destination directory:</p>
-      <Input
-        placeholder="Select a directory"
-        value={directoryHandle ? directoryHandle.name : ""}
-        isInvalid={directoryHandle === undefined}
-        readOnly
-        onChange={handleDirectoryPathChange}
-        style={{ width: "300px" }}
-      />
-      <Button onClick={handleBrowse}>Browse</Button>
-    </div>
+      <HStack>
+        <Input
+          placeholder="Select a directory"
+          value={directoryHandle ? directoryHandle.name : ""}
+          isInvalid={directoryHandle === undefined}
+          readOnly
+          onChange={handleDirectoryPathChange}
+          style={{ width: "300px" }}
+        />
+        <Button onClick={handleBrowse}>Browse</Button>
+      </HStack>
+    </VStack>
   );
 }

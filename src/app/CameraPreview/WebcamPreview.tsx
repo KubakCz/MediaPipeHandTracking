@@ -5,7 +5,7 @@ import CameraSettings from "../RightMenu/CameraSettings";
 import { HandLandmarker } from "./HandLandmarker/HandLandmarker";
 import NoPreview from "./Preview/NoPreview";
 import Preview from "./Preview/Preview";
-import RecordButton from "./RecordButton";
+import RecordButton from "../BottomMenu/RecordButton";
 import { VideoProcessor } from "./VideoProcessing";
 import { Resolution } from "../utils/resolution";
 import * as requests from "../requests/requests";

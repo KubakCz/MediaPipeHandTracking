@@ -4,10 +4,11 @@ import { useEffect, useState, useCallback, use } from "react";
 import { ChakraProvider, Flex, VStack } from "@chakra-ui/react";
 import DeviceSelect from "./DeviceSelect";
 import WebcamPreview from "./CameraPreview/WebcamPreview";
-import DirecotrySelect from "./DirectorySelect";
+import DirecotrySelect from "./BottomMenu/DirectorySelect";
 import { Resolution } from "./utils/resolution";
 import RightMenu from "./RightMenu/RightMenu";
 import { theme } from "./theme";
+import BottomMenu from "./BottomMenu/BottomMenu";
 
 export default function App() {
   const [devices, setDevices] = useState<InputDeviceInfo[]>([]);
@@ -114,21 +115,26 @@ export default function App() {
           w="100vw"
           h="100vh"
         >
-          <VStack justifyContent="center" flexGrow={2} h="100%">
-            <DeviceSelect
-              devices={devices}
-              onDeviceChange={handleDeviceChange}
-              onClick={handleUpdateDevices}
-            />
-            <WebcamPreview
-              videoTrack={videoTrack}
-              directoryHandle={directoryHandle}
-              resolution={resolution}
-            />
-            <DirecotrySelect
-              directoryHandle={directoryHandle}
-              onDirectorySelect={handleDirectorySelect}
-            />
+          <VStack justifyContent="center" alignItems="center" flexGrow={2} h="100%">
+            <VStack alignItems="flex-start">
+              <DeviceSelect
+                devices={devices}
+                onDeviceChange={handleDeviceChange}
+                onClick={handleUpdateDevices}
+              />
+              <WebcamPreview
+                videoTrack={videoTrack}
+                directoryHandle={directoryHandle}
+                resolution={resolution}
+              />
+              <BottomMenu
+                directoryHandle={directoryHandle}
+                onDirectorySelect={handleDirectorySelect}
+                isRecording={false}
+                redordButtonDisabled={false}
+                onRecordClick={() => {}}
+              />
+            </VStack>
           </VStack>
           <VStack p="5" borderLeftWidth={2} borderColor="gray.200" overflowY="scroll" h="100vh">
             <RightMenu videoTrack={videoTrack} onResolutionChange={setResolution} />

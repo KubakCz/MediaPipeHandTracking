@@ -34,7 +34,7 @@ export default function Preview({
   if (!stream) return <NoPreview height={height}>Waiting for the camera...</NoPreview>;
 
   return (
-    <div style={{ height: height, aspectRatio: aspectRatio, margin: "16px" }}>
+    <div style={{ height: height, aspectRatio: aspectRatio }}>
       <div style={{ position: "relative", width: "100%", height: "100%" }}>
         <video
           autoPlay

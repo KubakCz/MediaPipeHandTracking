@@ -22,8 +22,7 @@ export default function DeviceSelect({ devices, onDeviceChange, onClick }: Devic
         onMouseDown={onClick}
         variant="outline"
         placeholder="Select camera source"
-        maxWidth="300px"
-        margin="16px"
+        maxWidth="350px"
       >
         {devices.map((device) => (
           <option key={device.deviceId} value={device.deviceId}>

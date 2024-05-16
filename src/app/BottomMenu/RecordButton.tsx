@@ -14,7 +14,7 @@ interface RecordButtonProps {
  */
 export default function RecordButton({ isRecording, isDisabled, onClick }: RecordButtonProps) {
   return (
-    <Button onClick={onClick} isDisabled={isDisabled} colorScheme={"red"} m="16px">
+    <Button h="100%" w="150px" onClick={onClick} isDisabled={isDisabled} colorScheme={"red"}>
       {isRecording ? "Stop" : "Record"}
     </Button>
   );

@@ -24,7 +24,6 @@ export default function NoPreview({
       fontSize="lg"
       bg="gray.100"
       borderWidth="1px"
-      m="16px"
     >
       {children}
     </Box>
