@@ -1,12 +1,12 @@
 import { Select } from "@chakra-ui/react";
-import { on } from "events";
-import { useReducer, useState } from "react";
+import { useState } from "react";
 
 interface DeviceSelectProps {
+  isDisabled?: boolean;
   onDeviceChange?: (selectedDevice: InputDeviceInfo | undefined) => void;
 }
 
-export default function DeviceSelect({ onDeviceChange }: DeviceSelectProps) {
+export default function DeviceSelect({ isDisabled, onDeviceChange }: DeviceSelectProps) {
   const [devices, setDevices] = useState<InputDeviceInfo[]>([]);
 
   async function updateDevices() {
@@ -40,7 +40,9 @@ export default function DeviceSelect({ onDeviceChange }: DeviceSelectProps) {
     <>
       <Select
         onChange={handleDeviceChange}
-        onMouseDown={updateDevices}
+        // onMouseDown={updateDevices}
+        onMouseEnter={updateDevices}
+        isDisabled={isDisabled}
         variant="outline"
         placeholder="Select camera source"
         maxWidth="350px"
