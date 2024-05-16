@@ -1,5 +1,5 @@
 import { FilesetResolver, HandLandmarker, HandLandmarkerResult } from "@mediapipe/tasks-vision";
-import { getDecoderConfig } from "../VideoSettings";
+import { getDecoderConfig } from "../CameraPreview/VideoSettings";
 import * as messages from "./HandLandmarkerMessages";
 
 // Worker for asynchronous processing of video frames by HandLandmarker.

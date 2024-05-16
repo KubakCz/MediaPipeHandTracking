@@ -4,7 +4,7 @@ import CameraSettingsSwitch from "./Components/CameraSettingSwitch";
 import SettingSlider from "./Components/SettingSlider";
 import SettingsDropdown from "./Components/SettingsDropdown";
 import { RESOLUTIONS, Resolution } from "../utils/resolution";
-import { HandLandmarker } from "../CameraPreview/HandLandmarker/HandLandmarker";
+import { HandLandmarker } from "../HandLandmarker/HandLandmarker";
 import { VStack } from "@chakra-ui/react";
 
 /**
@@ -12,7 +12,7 @@ import { VStack } from "@chakra-ui/react";
  */
 interface CameraSettingsProps {
   videoTrack: MediaStreamTrack | null;
-  handLandmarker: HandLandmarker | null;
+  handLandmarker: HandLandmarker | undefined;
   onResolutionChange?: (resolution: Resolution) => void;
   isDisabled?: boolean;
 }

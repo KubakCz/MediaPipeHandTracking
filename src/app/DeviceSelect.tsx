@@ -1,6 +1,6 @@
 import { Select } from "@chakra-ui/react";
 import { on } from "events";
-import { useState } from "react";
+import { useReducer, useState } from "react";
 
 interface DeviceSelectProps {
   onDeviceChange?: (selectedDevice: InputDeviceInfo | undefined) => void;

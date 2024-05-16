@@ -10,14 +10,21 @@ import {
 import CameraSettings from "./CameraSettings";
 import ConnectionSettings from "./ConnectionSettings";
 import { Resolution } from "../utils/resolution";
+import { HandLandmarker } from "../HandLandmarker/HandLandmarker";
 
 interface RightMenuProps {
   videoTrack: MediaStreamTrack | null | undefined;
+  handLandmarker: HandLandmarker | undefined;
   isDisabled?: boolean;
   onResolutionChange?: (resolution: Resolution) => void;
 }
 
-export default function RightMenu({ videoTrack, onResolutionChange, isDisabled }: RightMenuProps) {
+export default function RightMenu({
+  videoTrack,
+  handLandmarker,
+  isDisabled,
+  onResolutionChange,
+}: RightMenuProps) {
   return (
     <Accordion allowToggle width="300px">
       <AccordionItem>
@@ -42,8 +49,7 @@ export default function RightMenu({ videoTrack, onResolutionChange, isDisabled }
         <AccordionPanel pb="4">
           <CameraSettings
             videoTrack={videoTrack || null}
-            // handLandmarker={handLandmarkerRef.current!} // TO BE FIXED
-            handLandmarker={null}
+            handLandmarker={handLandmarker}
             onResolutionChange={onResolutionChange}
             isDisabled={isDisabled}
           />

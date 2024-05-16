@@ -1,22 +1,31 @@
 "use client";
 
-import { useEffect, useReducer, useState } from "react";
-import { ChakraProvider, Flex, VStack } from "@chakra-ui/react";
+import { useEffect, useReducer, useRef, useState } from "react";
+import { ChakraProvider, Flex, VStack, useToast } from "@chakra-ui/react";
 import { theme } from "./theme";
 import DeviceSelect from "./DeviceSelect";
 import WebcamPreview from "./CameraPreview/WebcamPreview";
 import RightMenu from "./RightMenu/RightMenu";
 import BottomMenu from "./BottomMenu/BottomMenu";
+import { HandLandmarker } from "./HandLandmarker/HandLandmarker";
+import { handDataToJSON } from "./HandLandmarker/HandDataToJson";
+import { dateTimeString } from "./utils/dateTimeFormat";
 
 export default function App() {
-  const [videoStream, setVideoStream] = useState<MediaStream | null | undefined>();
   const [directoryHandle, setDirectoryHandle] = useState<FileSystemDirectoryHandle | undefined>();
+  const [videoStream, setVideoStream] = useState<MediaStream | null | undefined>();
   const [isRecording, setIsRecording] = useState(false);
+  const [isProcessing, setIsProcessing] = useState(false);
+  const handLandmarkerRef = useRef<HandLandmarker>();
 
   // Force redraw of the page
   const [, forceUpdate] = useReducer((x) => x + 1, 0);
 
-  // Check if WebCodecs API is supported
+  const toast = useToast();
+
+  /**
+   * Effect for checking WebCodecs API support.
+   */
   useEffect(() => {
     if (typeof window !== "undefined" && !("VideoEncoder" in window)) {
       console.error("WebCodecs API is not supported");
@@ -28,6 +37,31 @@ export default function App() {
     }
   }, []);
 
+  /**
+   * Effect for initializing HandLandmarker.
+   */
+  useEffect(() => {
+    console.log("Initializing HandLandmarker");
+    // Initialize handLandmarker
+    handLandmarkerRef.current = new HandLandmarker(
+      new Worker(new URL("HandLandmarker/HandLandmarkerWorker.ts", import.meta.url))
+    );
+    handLandmarkerRef.current
+      .init()
+      .then(() => {
+        console.log("HandLandmarker initialized");
+      })
+      .catch((error) => {
+        console.error("Error initializing HandLandmarker", error);
+        window.alert(
+          "Error initializing HandLandmarker. Please reload the page. You can find more information in the console."
+        );
+      });
+  }, []);
+
+  /**
+   * Handle camera change. Setups the stream and updates the state.
+   */
   function handleDeviceChange(selectedDevice: InputDeviceInfo | undefined) {
     if (isRecording) throw new Error("Cannot switch camera while recording");
 
@@ -62,6 +96,9 @@ export default function App() {
       });
   }
 
+  /**
+   * Handle directory selection. Updates the state.
+   */
   function handleDirectorySelect(
     directoryHandle: FileSystemDirectoryHandle | undefined,
     error?: Error
@@ -71,6 +108,59 @@ export default function App() {
     }
     if (error) {
       console.error("Error selecting directory", error);
+    }
+  }
+
+  /**
+   * Callback for when recording fails to start.
+   */
+  function handleRecordingStartFailed() {
+    setIsRecording(false);
+  }
+
+  /**
+   * Callback for when recording stops.
+   */
+  async function handleRecordingStop(videoChunks: EncodedVideoChunk[], startTime: number) {
+    if (!directoryHandle) throw new Error("No directory selected");
+    if (!handLandmarkerRef.current) throw new Error("HandLandmarker not set");
+
+    // Process recorded video
+    setIsProcessing(true);
+    const handData = await handLandmarkerRef.current.processVideo(videoChunks);
+    setIsProcessing(false);
+
+    // Save video data to file
+    let fileWriter: FileSystemWritableFileStream | undefined;
+    try {
+      console.log("Saving hand data");
+      const fileHandle = await directoryHandle?.getFileHandle(
+        `handData_${dateTimeString(new Date(startTime))}.json`, // TODO: Add file name input (optional)
+        {
+          create: true,
+        }
+      );
+      fileWriter = await fileHandle?.createWritable();
+      await fileWriter?.write(handDataToJSON(handData));
+    } catch (e) {
+      console.error("Error saving hand data", e);
+      toast({
+        title: "Error saving hand data",
+        description:
+          "An error occurred while saving the hand data. See the console for more information.",
+        status: "error",
+        duration: 5000,
+        isClosable: true,
+      });
+    } finally {
+      if (fileWriter) await fileWriter.close();
+      console.log("Video saved successfully");
+      toast({
+        title: "Video saved successfully",
+        status: "success",
+        duration: 5000,
+        isClosable: true,
+      });
     }
   }
 
@@ -89,7 +179,10 @@ export default function App() {
               <WebcamPreview
                 videoStream={videoStream}
                 directoryHandle={directoryHandle}
+                handLandmarkerRef={handLandmarkerRef}
                 isRecording={isRecording}
+                isProcessing={isProcessing}
+                onRecordingStop={handleRecordingStop}
               />
               <BottomMenu
                 directoryHandle={directoryHandle}
@@ -103,6 +196,7 @@ export default function App() {
           <VStack p="5" borderLeftWidth={2} borderColor="gray.200" overflowY="scroll" h="100vh">
             <RightMenu
               videoTrack={getCurrentVideoTrack()}
+              handLandmarker={handLandmarkerRef.current}
               onResolutionChange={forceUpdate}
               isDisabled={isRecording}
             />

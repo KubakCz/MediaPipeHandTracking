@@ -1,58 +1,40 @@
-import { CSSProperties, useState, useEffect, useRef, useCallback } from "react";
+import { useState, useEffect, useRef, useCallback, MutableRefObject } from "react";
 import { drawHands } from "./Drawing";
-import { handDataToJSON } from "./HandDataToJson";
-import { HandLandmarker } from "./HandLandmarker/HandLandmarker";
+import { HandLandmarker } from "../HandLandmarker/HandLandmarker";
 import NoPreview from "./Preview/NoPreview";
 import Preview from "./Preview/Preview";
 import { VideoProcessor } from "./VideoProcessing";
 import * as requests from "../requests/requests";
 import { useToast } from "@chakra-ui/react";
-import { dateTimeString } from "../utils/dateTimeFormat";
 
 interface WebcamPreviewProps {
   videoStream: MediaStream | null | undefined;
   directoryHandle: FileSystemDirectoryHandle | undefined;
+  handLandmarkerRef: MutableRefObject<HandLandmarker | undefined>;
   isRecording: boolean;
+  isProcessing?: boolean;
+  onRecordingStop?: (videoChunks: EncodedVideoChunk[], startTime: number) => Promise<void>;
+  onStartRecordingFailed?: () => void;
 }
 
 export default function WebcamPreview({
   videoStream,
   directoryHandle,
+  handLandmarkerRef,
   isRecording,
+  isProcessing,
+  onRecordingStop,
+  onStartRecordingFailed,
 }: WebcamPreviewProps) {
   // Video processing and recording
   const videoProcessorRef = useRef<VideoProcessor>(new VideoProcessor(handleFrameProcessed));
   const [recordingInProgress, setRecordingInProgress] = useState(false); // Recording state - true from startRecording to stopRecording
-  const [processingInProgress, setProcessingInProgress] = useState(false); // Processing state - true while processing video
   const [recordingOnServer, setRecordingOnServer] = useState<boolean>();
 
   // Hand visualization
-  const handLandmarkerRef = useRef<HandLandmarker>();
   const canvasRef = useRef<HTMLCanvasElement | null>(null);
 
   const toast = useToast();
-
-  /**
-   * Effect for initializing HandLandmarker
-   */
-  useEffect(() => {
-    console.log("Initializing HandLandmarker");
-    // Initialize handLandmarker
-    handLandmarkerRef.current = new HandLandmarker(
-      new Worker(new URL("HandLandmarker/HandLandmarkerWorker.ts", import.meta.url))
-    );
-    handLandmarkerRef.current
-      .init()
-      .then(() => {
-        console.log("HandLandmarker initialized");
-      })
-      .catch((error) => {
-        console.error("Error initializing HandLandmarker", error);
-        window.alert(
-          "Error initializing HandLandmarker. Please reload the page. You can find more information in the console."
-        );
-      });
-  }, []);
 
   /**
    * Effect for updating the video stream in the video processor.
@@ -99,7 +81,7 @@ export default function WebcamPreview({
       // Connected to a server
       const recordingStatus = await requests.isRecording();
       if (recordingStatus === undefined) {
-        // Server connected, but failed to get recording status
+        // Server connected, but failed to get recording status => Start recording only on the client side
         toast({
           title: "Failed to get recording status",
           description:
@@ -110,7 +92,7 @@ export default function WebcamPreview({
         });
         connectionSettings = null;
       } else if (recordingStatus === true) {
-        // Recording already in progress on the server
+        // Recording already in progress on the server => Do not start recording
         toast({
           title: "Recording already in progress",
           description:
@@ -119,6 +101,7 @@ export default function WebcamPreview({
           duration: 10000,
           isClosable: true,
         });
+        onStartRecordingFailed?.();
         return;
       } else {
         // Else recording status is synced with the server => start recording on the server
@@ -143,11 +126,14 @@ export default function WebcamPreview({
     await videoProcessorRef.current.startRecording(
       directoryHandle,
       undefined, // TODO: Add file name input (optional)
-      (e) => console.error(e)
+      (e) => {
+        console.error(e);
+        if (onStartRecordingFailed) onStartRecordingFailed();
+      }
     );
 
     setRecordingInProgress(true);
-  }, [directoryHandle, recordingInProgress, toast]);
+  }, [directoryHandle, onStartRecordingFailed, recordingInProgress, toast]);
 
   /**
    * Stops video recording and saves the result.
@@ -180,36 +166,10 @@ export default function WebcamPreview({
     );
 
     setRecordingInProgress(false); // Reset recording state
-    setProcessingInProgress(true); // Set processing state
 
-    // Process the recorded video and save the result
-    handLandmarkerRef
-      .current!.processVideo(vp.recordedChunks)
-      .then(async (hands) => {
-        // Save hand data
-        let fileWriter: FileSystemWritableFileStream | undefined;
-        try {
-          console.log("Saving hand data");
-          const fileHandle = await directoryHandle?.getFileHandle(
-            `handData_${dateTimeString(new Date(vp.recordingStartTime))}.json`, // TODO: Add file name input (optional)
-            {
-              create: true,
-            }
-          );
-          fileWriter = await fileHandle?.createWritable();
-          await fileWriter?.write(handDataToJSON(hands));
-        } catch (e) {
-          console.error("Error saving hand data", e);
-        } finally {
-          if (fileWriter) await fileWriter.close();
-          console.log("Video saved successfully");
-        }
-        vp.recordedChunks.length = 0;
-      })
-      .finally(() => {
-        setProcessingInProgress(false); // Reset processing state
-      });
-  }, [directoryHandle, recordingInProgress, recordingOnServer, toast]);
+    if (onRecordingStop) await onRecordingStop(vp.recordedChunks, vp.recordingStartTime);
+    vp.recordedChunks.length = 0; // Clear recorded chunks
+  }, [onRecordingStop, recordingInProgress, recordingOnServer, toast]);
 
   /**
    * Effect for starting or stopping recording based on the recording state.
