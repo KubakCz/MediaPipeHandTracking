@@ -6,11 +6,13 @@ interface DirectorySelectProps {
     directoryHandle: FileSystemDirectoryHandle | undefined,
     error?: Error
   ) => void;
+  isDisabled?: boolean;
 }
 
 export default function DirectorySelect({
   directoryHandle,
   onDirectorySelect,
+  isDisabled,
 }: DirectorySelectProps) {
   async function handleBrowse() {
     let directoryHandle = undefined;
@@ -35,10 +37,13 @@ export default function DirectorySelect({
           value={directoryHandle ? directoryHandle.name : ""}
           isInvalid={directoryHandle === undefined}
           readOnly
+          isDisabled={isDisabled}
           onChange={handleDirectoryPathChange}
           style={{ width: "300px" }}
         />
-        <Button onClick={handleBrowse}>Browse</Button>
+        <Button onClick={handleBrowse} isDisabled={isDisabled}>
+          Browse
+        </Button>
       </HStack>
     </VStack>
   );

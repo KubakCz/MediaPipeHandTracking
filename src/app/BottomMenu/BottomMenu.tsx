@@ -9,6 +9,7 @@ interface BottomMenuProps {
     error?: Error
   ) => void;
   isRecording: boolean;
+  isDisabled?: boolean;
   redordButtonDisabled?: boolean;
   onRecordClick?: () => void;
 }
@@ -20,12 +21,17 @@ export default function BottomMenu({
   directoryHandle,
   onDirectorySelect,
   isRecording,
+  isDisabled,
   redordButtonDisabled,
   onRecordClick,
 }: BottomMenuProps) {
   return (
     <HStack w="100%" justifyContent="space-between">
-      <DirectorySelect directoryHandle={directoryHandle} onDirectorySelect={onDirectorySelect} />
+      <DirectorySelect
+        isDisabled={isDisabled}
+        directoryHandle={directoryHandle}
+        onDirectorySelect={onDirectorySelect}
+      />
       <RecordButton
         isRecording={isRecording}
         isDisabled={redordButtonDisabled}

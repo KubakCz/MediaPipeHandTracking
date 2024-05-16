@@ -188,7 +188,10 @@ export default function App() {
                 directoryHandle={directoryHandle}
                 onDirectorySelect={handleDirectorySelect}
                 isRecording={isRecording}
-                redordButtonDisabled={directoryHandle === undefined || videoStream === undefined}
+                isDisabled={isRecording || isProcessing}
+                redordButtonDisabled={
+                  directoryHandle === undefined || videoStream === undefined || isProcessing
+                }
                 onRecordClick={() => setIsRecording(!isRecording)}
               />
             </VStack>
