@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 import { CameraCapabilities } from "../utils/cameraCapabilities";
-import CameraSettingsSwitch from "./CameraSettings/CameraSettingSwitch";
+import CameraSettingsSwitch from "./Components/CameraSettingSwitch";
 import SettingSlider from "./Components/SettingSlider";
 import SettingsDropdown from "./Components/SettingsDropdown";
 import { RESOLUTIONS, Resolution } from "../utils/resolution";

@@ -5,8 +5,8 @@ import "./globals.css";
 const inter = Inter({ subsets: ["latin"] });
 
 export const metadata: Metadata = {
-  title: "Hand Recorder",
-  description: "Application for hand tracking and recording",
+  title: "Hand Capture",
+  description: "Application for hand pose estimation from an RGB camera",
 };
 
 export default function RootLayout({

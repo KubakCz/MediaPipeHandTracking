@@ -13,6 +13,7 @@ export default function App() {
   const [directoryHandle, setDirectoryHandle] = useState<FileSystemDirectoryHandle | undefined>();
   const [isRecording, setIsRecording] = useState(false);
 
+  // Force redraw of the page
   const [, forceUpdate] = useReducer((x) => x + 1, 0);
 
   // Check if WebCodecs API is supported
