@@ -5,7 +5,8 @@ import NoPreview from "./Preview/NoPreview";
 import Preview from "./Preview/Preview";
 import { VideoProcessor } from "./VideoProcessing";
 import * as requests from "../requests/requests";
-import { useToast } from "@chakra-ui/react";
+import { Box, Button, Text, useToast } from "@chakra-ui/react";
+import ProcessingFeedback from "./Preview/ProcessingFeedback";
 
 interface WebcamPreviewProps {
   videoStream: MediaStream | null | undefined;
@@ -187,7 +188,9 @@ export default function WebcamPreview({
       {videoStream === undefined ? (
         <NoPreview>No camera selected</NoPreview>
       ) : (
-        <Preview stream={videoStream} canvasRef={canvasRef} />
+        <Preview stream={videoStream} canvasRef={canvasRef}>
+          {isProcessing ? <ProcessingFeedback /> : null}
+        </Preview>
       )}
     </>
   );

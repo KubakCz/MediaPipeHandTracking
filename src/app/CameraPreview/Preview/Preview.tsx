@@ -1,5 +1,7 @@
 import { CSSProperties, useEffect } from "react";
 import NoPreview from "./NoPreview";
+import { Button } from "@chakra-ui/button";
+import { Box } from "@chakra-ui/react";
 
 /**
  * Props for the Preview component.
@@ -7,6 +9,7 @@ import NoPreview from "./NoPreview";
 interface PreviewProps {
   stream: MediaStream | null;
   canvasRef: React.MutableRefObject<HTMLCanvasElement | null>;
+  children?: React.ReactNode;
 }
 
 /**
@@ -16,7 +19,7 @@ interface PreviewProps {
  * @param height - Height of the preview.
  * @returns Camera preview component.
  */
-export default function Preview({ stream, canvasRef }: PreviewProps) {
+export default function Preview({ stream, canvasRef, children }: PreviewProps) {
   // It may take some time for the stream to be ready
   if (!stream) return <NoPreview>Waiting for the camera...</NoPreview>;
 
@@ -61,7 +64,10 @@ export default function Preview({ stream, canvasRef }: PreviewProps) {
             aspectRatio: aspectRatio,
             height: "100%",
           }}
-        ></canvas>
+        />
+        <Box position="absolute" left="0px" top="0px" h="100%" w="100%" zIndex={1000}>
+          {children}
+        </Box>
       </div>
     </div>
   );
