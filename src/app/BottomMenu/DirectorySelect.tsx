@@ -15,18 +15,25 @@ export default function DirectorySelect({
   isDisabled,
 }: DirectorySelectProps) {
   async function handleBrowse() {
-    let directoryHandle = undefined;
-
+    let directoryHandle: FileSystemDirectoryHandle | undefined = undefined;
     try {
       directoryHandle = await window.showDirectoryPicker();
     } catch (error) {
       onDirectorySelect(undefined, error as Error);
+      return;
+    }
+
+    // Ask for permission
+    if (
+      (await directoryHandle!.queryPermission({ mode: "readwrite" })) !== "granted" &&
+      (await directoryHandle!.requestPermission({ mode: "readwrite" })) === "denied"
+    ) {
+      onDirectorySelect(undefined, new Error("Permission denied"));
+      return;
     }
 
     onDirectorySelect(directoryHandle);
   }
-
-  async function handleDirectoryPathChange(event: React.ChangeEvent<HTMLInputElement>) {}
 
   return (
     <VStack alignItems="flex-start">
@@ -38,8 +45,8 @@ export default function DirectorySelect({
           isInvalid={directoryHandle === undefined}
           readOnly
           isDisabled={isDisabled}
-          onChange={handleDirectoryPathChange}
-          style={{ width: "300px" }}
+          onClick={handleBrowse}
+          w="300px"
         />
         <Button onClick={handleBrowse} isDisabled={isDisabled} size="md">
           Browse

@@ -108,6 +108,7 @@ export default function App() {
     }
     if (error) {
       console.error("Error selecting directory", error);
+      setDirectoryHandle(undefined);
     }
   }
 
