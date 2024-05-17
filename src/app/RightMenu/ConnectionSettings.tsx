@@ -16,17 +16,20 @@ export default function ConnectionSettings() {
   const [connectingInProgress, setConnectingInProgress] = useState<boolean>(false);
 
   // State variables for the connection settings
-  const [localIP, setLocalIP] = useState<string | null>(null);
-  const [serverIP, setServerIP] = useState<string | null>(null);
-  const [commandPort, setCommandPort] = useState<number | null>(null);
-  const [dataPort, setDataPort] = useState<number | null>(null);
+  const [localIP, setLocalIP] = useState<string | null>("127.0.0.1");
+  const [serverIP, setServerIP] = useState<string | null>("127.0.0.1");
+  const [commandPort, setCommandPort] = useState<number | null>(0);
+  const [dataPort, setDataPort] = useState<number | null>(0);
   const [connectionType, setConnectionType] = useState<ConnectionType>(ConnectionType.Multicast);
+
+  const toast = useToast();
 
   /**
    * Checks if all connection settings are valid.
    * @returns {boolean} - True if all connection settings are valid, false otherwise.
    */
   function allValid(): boolean {
+    console.log(localIP, serverIP, commandPort, dataPort);
     return localIP !== null && serverIP !== null && commandPort !== null && dataPort !== null;
   }
 
@@ -87,35 +90,47 @@ export default function ConnectionSettings() {
    * Effect hook to get the connection settings when the component mounts.
    */
   useEffect(() => {
+    console.log("ConnectionSettings mounted");
     setConnectingInProgress(true);
     // Try to get the connection settings to currently connected NatNet server
-    requests.getConnectionSettings().then((settings) => {
-      if (settings) {
-        setIsConnected(true);
-        setLocalIP(settings.localIP);
-        setServerIP(settings.serverIP);
-        setCommandPort(settings.commandPort);
-        setDataPort(settings.dataPort);
-        setConnectionType(settings.connectionType);
+    requests
+      .getConnectionSettings()
+      .then((settings) => {
+        // Backend running...
+        if (settings) {
+          // Already connected => set the connection settings
+          setIsConnected(true);
+          setLocalIP(settings.localIP);
+          setServerIP(settings.serverIP);
+          setCommandPort(settings.commandPort);
+          setDataPort(settings.dataPort);
+          setConnectionType(settings.connectionType);
+        } else {
+          // Not connected => get the default connection settings
+          setIsConnected(false);
+          requests.getDefaultConnectionSettings().then((settings) => {
+            if (settings) {
+              setLocalIP(settings.localIP);
+              setServerIP(settings.serverIP);
+              setCommandPort(settings.commandPort);
+              setDataPort(settings.dataPort);
+              setConnectionType(settings.connectionType);
+            }
+          });
+        }
+      })
+      .catch((error) => {
+        // Failed to connect
+        console.log(error);
+      })
+      .finally(() => {
         setConnectingInProgress(false);
-      } else {
-        // If not connected, get the default connection settings
-        setIsConnected(false);
-        requests.getDefaultConnectionSettings().then((settings) => {
-          if (settings) {
-            setLocalIP(settings.localIP);
-            setServerIP(settings.serverIP);
-            setCommandPort(settings.commandPort);
-            setDataPort(settings.dataPort);
-            setConnectionType(settings.connectionType);
-          }
-          setConnectingInProgress(false);
-        });
-      }
-    });
+        console.log("ConnectionSettings unmounted");
+      });
   }, []);
 
-  const toast = useToast();
+  console.log("ConnectionSettings rendered", connectingInProgress, allValid());
+
   return (
     <VStack alignItems="stretch" textAlign="left" gap="2">
       <p>{isConnected ? "Connected to NatNet server" : "Not connected to NatNetServer"}</p>
