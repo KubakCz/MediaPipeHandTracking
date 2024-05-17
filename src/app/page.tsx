@@ -174,7 +174,7 @@ export default function App() {
       <ChakraProvider theme={theme}>
         <Flex direction="row" justifyContent="flex-end" alignItems="center" w="100vw" h="100vh">
           <VStack justifyContent="center" alignItems="center" flexGrow={1}>
-            <VStack alignItems="flex-start">
+            <VStack alignItems="flex-start" gap={5}>
               <DeviceSelect isDisabled={isRecording} onDeviceChange={handleDeviceChange} />
               <WebcamPreview
                 videoStream={videoStream}

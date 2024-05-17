@@ -1,4 +1,5 @@
-import { Button } from "@chakra-ui/react";
+import { Button, Text } from "@chakra-ui/react";
+import { PiRecordFill } from "react-icons/pi";
 
 /**
  * Props for the RecordButton component.
@@ -14,8 +15,9 @@ interface RecordButtonProps {
  */
 export default function RecordButton({ isRecording, isDisabled, onClick }: RecordButtonProps) {
   return (
-    <Button w="150px" h="100%" onClick={onClick} isDisabled={isDisabled} colorScheme={"red"}>
-      {isRecording ? "Stop" : "Record"}
+    <Button w="140px" h="100%" onClick={onClick} isDisabled={isDisabled} size="xl" gap={2} p={5}>
+      <PiRecordFill />
+      <Text>{isRecording ? "Stop" : "Record"}</Text>
     </Button>
   );
 }

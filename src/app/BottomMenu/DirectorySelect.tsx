@@ -41,7 +41,7 @@ export default function DirectorySelect({
           onChange={handleDirectoryPathChange}
           style={{ width: "300px" }}
         />
-        <Button onClick={handleBrowse} isDisabled={isDisabled}>
+        <Button onClick={handleBrowse} isDisabled={isDisabled} size="md">
           Browse
         </Button>
       </HStack>

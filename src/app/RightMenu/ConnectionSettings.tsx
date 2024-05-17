@@ -134,7 +134,6 @@ export default function ConnectionSettings() {
         isDisabled={connectingInProgress || !allValid()}
         maxWidth="120"
         size="md"
-        backgroundColor="brand.400"
       >
         {connectingInProgress ? <Spinner /> : "Connect"}
       </Button>
