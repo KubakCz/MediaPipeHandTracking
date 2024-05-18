@@ -34,11 +34,9 @@ export default function SettingSlider({
   onChangeEnd,
 }: SettingSliderProps) {
   return (
-    <SettingsComponent label={label}>
+    <SettingsComponent label={label} isDisabled={isDisabled}>
       <Slider
-        size="sm"
         my="1"
-        aria-label="slider-ex-1"
         value={value}
         min={min}
         max={max}
@@ -48,7 +46,7 @@ export default function SettingSlider({
         onChangeEnd={onChangeEnd}
       >
         <SliderTrack>
-          <SliderFilledTrack bg="brand.400" />
+          <SliderFilledTrack />
         </SliderTrack>
         <SliderThumb />
       </Slider>

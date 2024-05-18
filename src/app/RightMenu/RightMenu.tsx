@@ -26,11 +26,11 @@ export default function RightMenu({
   onResolutionChange,
 }: RightMenuProps) {
   return (
-    <Accordion allowToggle width="300px">
+    <Accordion allowToggle width="400px">
       <AccordionItem>
         <AccordionButton>
           <Box as="span" flex="1" textAlign="left">
-            <Heading size="md">Motive Connection</Heading>
+            <Heading fontSize="18pt">Motive Connection</Heading>
           </Box>
           <AccordionIcon />
         </AccordionButton>
@@ -42,7 +42,7 @@ export default function RightMenu({
       <AccordionItem>
         <AccordionButton>
           <Box as="span" flex="1" textAlign="left">
-            <Heading size="md">Camera Settings</Heading>
+            <Heading fontSize="18pt">Camera Settings</Heading>
           </Box>
           <AccordionIcon />
         </AccordionButton>

@@ -30,6 +30,50 @@ const Button = defineStyleConfig({
   },
 });
 
+const Slider = defineStyleConfig({
+  baseStyle: {
+    filledTrack: {
+      bg: "brand.400",
+    },
+  },
+});
+
+const Switch = defineStyleConfig({
+  baseStyle: {
+    track: {
+      _checked: {
+        bg: "brand.400",
+      },
+    },
+  },
+  variants: {
+    twoWay: {
+      track: {
+        bg: "brand.400",
+        _checked: {
+          bg: "brand.400",
+        },
+      },
+    },
+  },
+});
+
+const Text = defineStyleConfig({
+  variants: {
+    disabled: {
+      color: "gray.400",
+    },
+  },
+});
+
+const Heading = defineStyleConfig({
+  variants: {
+    disabled: {
+      color: "gray.400",
+    },
+  },
+});
+
 export const theme = extendTheme({
   colors: {
     brand: {
@@ -40,5 +84,9 @@ export const theme = extendTheme({
   },
   components: {
     Button,
+    Slider,
+    Switch,
+    Text,
+    Heading,
   },
 });

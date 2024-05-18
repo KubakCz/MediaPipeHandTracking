@@ -31,8 +31,13 @@ export default function SettingsDropdown<T extends ToStringable>({
   }
 
   return (
-    <SettingsComponent label={label}>
-      <Select value={value.toString()} isDisabled={isDisabled || false} onChange={handleOnChange}>
+    <SettingsComponent label={label} isDisabled={isDisabled}>
+      <Select
+        value={value.toString()}
+        isDisabled={isDisabled || false}
+        onChange={handleOnChange}
+        mb={1}
+      >
         {options.map((option, index) => (
           <option key={index} value={option.toString()}>
             {option.toString()}
