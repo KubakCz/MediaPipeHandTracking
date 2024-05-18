@@ -1,19 +1,35 @@
-import { Input, VStack, Text } from "@chakra-ui/react";
+import { Input } from "@chakra-ui/react";
 import { useEffect, useState } from "react";
 import SettingsComponent from "./SettingsComponent";
 
 interface PortInputProps {
+  /**
+   * Label of the input.
+   */
   label: string;
+  /**
+   * Current value of the input.
+   */
   value: number | null;
+  /**
+   * Callback function to handle input change.
+   * @param value The new port number or null if the input is invalid.
+   */
   onChange: (value: number | null) => void;
 }
 
+/**
+ * Check if the input is a valid port number.
+ * @param port The input to check.
+ * @returns True if the input is a valid port number.
+ */
 function isValidPort(port: number): boolean {
   return !isNaN(port) && port >= 0 && port <= 65535;
 }
 
 /**
  * Port number input component.
+ * Displays a label and an input for a port number.
  * Checks if the input is a valid port number.
  */
 export default function PortInput({ label, value, onChange }: PortInputProps) {
@@ -32,7 +48,7 @@ export default function PortInput({ label, value, onChange }: PortInputProps) {
 
     // Check if the input contains only digits
     const containsOnlyDigits = /^[0-9]*$/.test(newValue);
-    if (!containsOnlyDigits) return;
+    if (!containsOnlyDigits) return; // Reject the input if it contains any non-digit characters
 
     setPortString(newValue);
 

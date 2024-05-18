@@ -1,23 +1,49 @@
 import { useState, useEffect, useRef, useCallback, MutableRefObject } from "react";
-import { drawHands } from "./Drawing";
-import { HandLandmarker } from "../HandLandmarker/HandLandmarker";
-import NoPreview from "./Preview/NoPreview";
-import Preview from "./Preview/Preview";
-import { VideoProcessor } from "./VideoProcessing";
-import * as requests from "../requests/requests";
-import { Heading, useToast } from "@chakra-ui/react";
-import VideoText from "./Preview/VideoText";
+import * as requests from "../app/requests/requests";
+import { useToast } from "@chakra-ui/react";
+import { HandLandmarker } from "../app/handLandmarker/handLandmarker";
+import { VideoProcessor } from "../app/video/videoProcessing";
+import { drawHands } from "../app/video/drawing";
+import { Preview, NoPreview, VideoText } from "./cameraPreviewComponents";
 
 interface WebcamPreviewProps {
+  /**
+   * Media stream from the webcam.
+   * Undefined if the webcam is not selected.
+   * Null if the webcam is selected but the stream is not ready.
+   */
   videoStream: MediaStream | null | undefined;
+  /**
+   * Directory handle to save the recorded video.
+   */
   directoryHandle: FileSystemDirectoryHandle | undefined;
+  /**
+   * Reference to the HandLandmarker instance.
+   */
   handLandmarkerRef: MutableRefObject<HandLandmarker | undefined>;
+  /**
+   * Whether the video is currently being recorded.
+   */
   isRecording: boolean;
+  /**
+   * Whether the video is currently being processed.
+   */
   isProcessing?: boolean;
+  /**
+   * Callback when the recording is stopped.
+   * @param videoChunks Recorded video chunks.
+   * @param startTime Start time of the recording (number of milliseconds elapsed since midnight, January 1, 1970 Universal Coordinated Time (UTC)).
+   */
   onRecordingStop?: (videoChunks: EncodedVideoChunk[], startTime: number) => Promise<void>;
+  /**
+   * Callback when starting recording failed.
+   */
   onStartRecordingFailed?: () => void;
 }
 
+/**
+ * Component for displaying the webcam preview and hand tracking results.
+ */
 export default function WebcamPreview({
   videoStream,
   directoryHandle,
@@ -37,6 +63,7 @@ export default function WebcamPreview({
 
   const toast = useToast();
 
+  Date.now()
   /**
    * Effect for updating the video stream in the video processor.
    */

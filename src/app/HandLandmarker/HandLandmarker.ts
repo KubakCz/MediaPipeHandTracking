@@ -1,5 +1,5 @@
 import { HandLandmarkerResult } from "@mediapipe/tasks-vision";
-import * as messages from "./HandLandmarkerMessages";
+import * as messages from "./handLandmarkerMessages";
 
 /**
  * Class wrapping the HandLandmarker worker.

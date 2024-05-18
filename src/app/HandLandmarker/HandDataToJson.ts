@@ -1,25 +1,7 @@
 import { HandLandmarkerResult } from "@mediapipe/tasks-vision";
 
-interface Vector3 {
-  x: number;
-  y: number;
-  z: number;
-}
-
-interface HandFrame {
-  timestamp: number;
-  normalizedPositions: Vector3[];
-  worldPositions: Vector3[];
-}
-
-interface HandAnimationData {
-  name: string;
-  type: string;
-  animationData: HandFrame[];
-}
-
 /**
- * Converts the HandLandmarkerResult data to a JSON string readable by Musical Instrument Capture blender add-on.
+ * Converts the HandLandmarkerResult data to a JSON string readable by Musical Instrument Animation blender add-on.
  * @param handData - HandLandmarkerResult data with timestamps.
  * @returns JSON string.
  */
@@ -41,10 +23,10 @@ export function handDataToJSON(
   // Convert each frame to a format readable by the blender add-on
   for (const frame of handData) {
     const data = frame.data;
-    const timestamp = frame.timestamp / 1000000;
+    const timestamp = frame.timestamp / 1000000; // Convert microseconds to seconds
     for (let i = 0; i < data.handedness.length; i++) {
       const dataRef =
-        data.handedness[i][0].categoryName === "Left" // Note: as MediaPipe works with mirror images, the true handedness is reversed
+        data.handedness[i][0].categoryName === "Left" // Note: as MediaPipe works with mirror images, the true hand type is reversed
           ? transformedData[1].animationData
           : transformedData[0].animationData;
       if (dataRef.length > 0 && dataRef[dataRef.length - 1].timestamp >= timestamp) {
@@ -64,4 +46,34 @@ export function handDataToJSON(
 
   // Return the JSON string
   return JSON.stringify(transformedData);
+}
+
+/**
+ * 3 dimensional vector.
+ */
+interface Vector3 {
+  x: number;
+  y: number;
+  z: number;
+}
+
+/**
+ * Animation data of a single frame.
+ */
+interface HandFrame {
+  timestamp: number;
+  normalizedPositions: Vector3[];
+  worldPositions: Vector3[];
+}
+
+/**
+ * Animation data of a hand.
+ */
+interface HandAnimationData {
+  name: string;
+  /**
+   * Type of the hand (Left or Right).
+   */
+  type: string;
+  animationData: HandFrame[];
 }

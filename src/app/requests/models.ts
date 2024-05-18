@@ -1,3 +1,5 @@
+// Definition of the models used in requests.
+
 export enum ConnectionType {
   Unicast = "Unicast",
   Multicast = "Multicast",

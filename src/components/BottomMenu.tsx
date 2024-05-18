@@ -1,34 +1,54 @@
 import { HStack } from "@chakra-ui/react";
-import DirectorySelect from "./DirectorySelect";
-import RecordButton from "./RecordButton";
+import { DirectorySelect, RecordButton } from "./bottomMenuItems";
 
 interface BottomMenuProps {
+  /**
+   * Currently selected directory handle.
+   */
   directoryHandle: FileSystemDirectoryHandle | undefined;
+  /**
+   * Callback when a directory is selected.
+   * @param directoryHandle New directory handle.
+   * @param error Error that occurred during directory selection.
+   */
   onDirectorySelect: (
     directoryHandle: FileSystemDirectoryHandle | undefined,
     error?: Error
   ) => void;
+  /**
+   * Whether the app is currently recording.
+   */
   isRecording: boolean;
-  isDisabled?: boolean;
+  /**
+   * If true, the directory selection is disabled.
+   */
+  directorySelectDisabled?: boolean;
+  /**
+   * If true, the record button is disabled.
+   */
   redordButtonDisabled?: boolean;
+  /**
+   * Callback when the record button is clicked.
+   */
   onRecordClick?: () => void;
 }
 
 /**
- * Component for the bottom menu.
+ * Bottom menu component.
+ * Displays directory selection and record button.
  */
 export default function BottomMenu({
   directoryHandle,
   onDirectorySelect,
   isRecording,
-  isDisabled,
+  directorySelectDisabled,
   redordButtonDisabled,
   onRecordClick,
 }: BottomMenuProps) {
   return (
     <HStack w="100%" justifyContent="space-between">
       <DirectorySelect
-        isDisabled={isDisabled}
+        isDisabled={directorySelectDisabled}
         directoryHandle={directoryHandle}
         onDirectorySelect={onDirectorySelect}
       />

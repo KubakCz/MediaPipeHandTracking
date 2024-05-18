@@ -2,6 +2,7 @@ import { HandLandmarkerResult } from "@mediapipe/tasks-vision";
 import { drawConnectors, drawLandmarks } from "@mediapipe/drawing_utils";
 import { HAND_CONNECTIONS } from "@mediapipe/hands";
 
+// Colors for drawing.
 const baseColor = "#F01010";
 const inverseColor = "#10F010";
 
