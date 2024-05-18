@@ -1,13 +1,15 @@
+// Functions for easy communication with the backend REST API.
+
 import axios, { AxiosResponse } from "axios";
 import { ConnectionSettings } from "./models";
 
-const BASE_URL = "http://localhost:5184";
-const TIMEOUT = 1000;
+const BASE_URL = "http://localhost:5184"; // Base URL of the backend REST API
+const TIMEOUT = 1000; // Default timeout in milliseconds
 
 /**
- * Sends a GET request to the specified URL.
+ * Send a GET request to the specified URL.
  * @param {string} url - The URL to send the request to.
- * @param {number} [timeout=0] - The request timeout in milliseconds.
+ * @param {number} [timeout=0] - The request timeout in milliseconds. (0 means no timeout)
  * @returns A Promise that resolves to the response of the request.
  */
 function getRequest(url: string, timeout: number = 0): Promise<any> {
@@ -20,10 +22,10 @@ function getRequest(url: string, timeout: number = 0): Promise<any> {
 }
 
 /**
- * Sends a POST request to the specified URL.
+ * Send a POST request to the specified URL.
  * @param {string} url - The URL to send the request to.
  * @param {any} data - The data to send in the request.
- * @param {number} [timeout=0] - The request timeout in milliseconds.
+ * @param {number} [timeout=0] - The request timeout in milliseconds. (0 means no timeout)
  * @returns A Promise that resolves to the response of the request.
  */
 function postRequest(url: string, data: any, timeout: number = 0): Promise<any> {
@@ -37,7 +39,7 @@ function postRequest(url: string, data: any, timeout: number = 0): Promise<any> 
 }
 
 /**
- * Gets the current NatNet connection settings.
+ * Get the current NatNet connection settings.
  * @returns A Promise that resolves to the connection settings if connected to a NatNetServer, null if not connected to NatNet server, or undefined if an error occurs.
  */
 export async function getConnectionSettings(): Promise<ConnectionSettings | undefined | null> {
@@ -51,7 +53,7 @@ export async function getConnectionSettings(): Promise<ConnectionSettings | unde
 }
 
 /**
- * Gets the default NatNet connection settings.
+ * Get the default NatNet connection settings.
  * @returns A Promise that resolves to the default connection settings, or undefined if an error occurs.
  */
 export async function getDefaultConnectionSettings(): Promise<ConnectionSettings | undefined> {
