@@ -1,12 +1,32 @@
-import { VStack, Text, Heading, HStack } from "@chakra-ui/react";
-import SettingSwitch from "./SettingSwitch";
+import { VStack, Heading, HStack } from "@chakra-ui/react";
+import SettingsSwitch from "./SettingsSwitch";
 
 interface SettingsCategoryProps {
+  /**
+   * Name of the category.
+   */
   name: string;
+  /**
+   * Settings components to be displayed in the category.
+   */
   children?: React.ReactNode;
+  /**
+   * If true, the name and auto switch will be displayed as disabled.
+   */
   isDisabled?: boolean;
+  /**
+   * Value of the "auto" setting switch.
+   * If undefined, the switch will not be displayed.
+   */
   autoValue?: boolean | undefined;
+  /**
+   * Callback function to handle auto setting change.
+   */
   onAutoChange?: (value: boolean) => void;
+  /**
+   * Label of the "auto" setting switch.
+   * If not provided, the label will be "Auto" + category name in lowercase.
+   */
   autoLabel?: string;
 }
 
@@ -30,7 +50,7 @@ export default function SettingsCategory({
           {name}
         </Heading>
         {autoValue !== undefined && (
-          <SettingSwitch
+          <SettingsSwitch
             label={autoLabel || "Auto" + name.toLowerCase()}
             value={autoValue}
             isDisabled={isDisabled}

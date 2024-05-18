@@ -1,16 +1,14 @@
 import { useEffect, useState } from "react";
-import IPInput from "./Components/IPInput";
-import PortInput from "./Components/PortInput";
-import { ConnectionType, ConnectionSettings } from "../requests/models";
-import { Button, Text, Select, Spinner, VStack, useToast, Icon } from "@chakra-ui/react";
-import * as requests from "../requests/requests";
-import SettingsDropdown from "./Components/SettingsDropdown";
-import AccordionMenuItem from "./Components/AccordionMenuItem";
+import { Button, Spinner, useToast, Icon } from "@chakra-ui/react";
 import { IoCheckmarkCircle, IoCloseCircle } from "react-icons/io5";
+import { ConnectionType, ConnectionSettings } from "../../app/requests/models";
+import * as requests from "../../app/requests/requests";
+import AccordionMenuItem from "./AccordionMenuItem";
+import { IPInput, PortInput, SettingsDropdown } from "./input";
 
 /**
- * Connection settings form component.
- * Used to connect to a NatNet server.
+ * Connection settings accordion menu item.
+ * Controls the connection settings to the NatNet server.
  */
 export default function ConnectionSettings() {
   // State variables for the connection status

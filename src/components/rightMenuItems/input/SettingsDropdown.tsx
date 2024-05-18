@@ -6,15 +6,33 @@ interface ToStringable {
 }
 
 interface SettingsDropdownProps<T extends ToStringable> {
+  /**
+   * Label of the dropdown.
+   */
   label: string;
+  /**
+   * Current value of the dropdown.
+   */
   value: T;
+  /**
+   * Options to be displayed in the dropdown.
+   */
   options: T[];
+  /**
+   * Whether the dropdown is disabled.
+   */
   isDisabled?: boolean;
+  /**
+   * Callback function to handle dropdown change.
+   * @param value The new value of the dropdown.
+   */
   onChange: (value: T) => void;
 }
 
 /**
  * A dropdown component for settings.
+ * Displays a label and a dropdown with options.
+ * @typeparam T Type of the dropdown options that can be converted to a string.
  */
 export default function SettingsDropdown<T extends ToStringable>({
   label,

@@ -1,30 +1,36 @@
 import { useEffect, useState } from "react";
-import { CameraCapabilities } from "../utils/cameraCapabilities";
-import SettingSlider from "./Components/SettingSlider";
-import SettingsDropdown from "./Components/SettingsDropdown";
-import { RESOLUTIONS, Resolution } from "../utils/resolution";
-import { HandLandmarker } from "../HandLandmarker/HandLandmarker";
-import { Icon, VStack } from "@chakra-ui/react";
-import SettingsCategory from "./Components/SettingsCategory";
-import TwoWaySwitch from "./Components/TwoWaySwitch";
-import AccordionMenuItem from "./Components/AccordionMenuItem";
 import { MdVideoCameraBack } from "react-icons/md";
+import { CameraCapabilities } from "../../app/utils/cameraCapabilities";
+import { Icon, VStack } from "@chakra-ui/react";
+import { RESOLUTIONS, Resolution } from "../../app/utils/resolution";
+import { HandLandmarker } from "../../app/handLandmarker/handLandmarker";
+import AccordionMenuItem from "./AccordionMenuItem";
+import { SettingsCategory, SettingsDropdown, TwoWaySwitch, SettingsSlider } from "./input";
 
-/**
- * Properties for the camera settings form.
- */
 interface CameraSettingsProps {
+  /**
+   * Video track to control.
+   */
   videoTrack: MediaStreamTrack | null;
+  /**
+   * Hand tracking worker to control.
+   */
   handLandmarker: HandLandmarker | undefined;
+  /**
+   * Callback function to handle resolution change.
+   * @param resolution New resolution.
+   */
   onResolutionChange?: (resolution: Resolution) => void;
+  /**
+   * If true, all settings will be displayed as disabled.
+   */
   isDisabled?: boolean;
 }
 
 /**
- *
- * Camera settings form component.
+ * Cammera settings accordion menu item.
  * Controls settings of the provided video track and hand tracking worker.
- * @param isDisabled - Disables all the settings if true.
+ * Unavailable settings are displayed as disabled.
  */
 export default function CameraSettings({
   videoTrack,
@@ -422,7 +428,7 @@ export default function CameraSettings({
         isDisabled={isAutoexposureDisabled || isDisabled}
         onAutoChange={handleAutoexposureChange}
       >
-        <SettingSlider
+        <SettingsSlider
           label="Exposure Time"
           value={exposureTime}
           isDisabled={isExposureTimeDisabled || isDisabled}
@@ -431,7 +437,7 @@ export default function CameraSettings({
           step={videoTrackCapabilitiesAny?.exposureTime?.step}
           onChange={handleExposureTimeChange}
         />
-        {/* <SettingSlider
+        {/* <SettingsSlider
           label="Exposure Compensation"
           value={exposureCompensation}
           isDisabled={isExposureCompensationDisabled || isDisabled}
@@ -448,7 +454,7 @@ export default function CameraSettings({
         isDisabled={isAutofocusDisabled || isDisabled}
         onAutoChange={handleAutofocusChange}
       >
-        <SettingSlider
+        <SettingsSlider
           label="Focus Distance"
           value={focusDistance}
           isDisabled={isFocusDistanceDisabled || isDisabled}
@@ -466,7 +472,7 @@ export default function CameraSettings({
         isDisabled={isAutoWhiteBalanceDisabled || isDisabled}
         onAutoChange={handleAutoWhiteBalanceChange}
       >
-        <SettingSlider
+        <SettingsSlider
           label="Color Temperature"
           value={whiteBalance}
           isDisabled={isWhiteBalanceDisabled || isDisabled}
@@ -487,7 +493,7 @@ export default function CameraSettings({
             isSharpnessDisabled)
         }
       >
-        <SettingSlider
+        <SettingsSlider
           label="Brightness"
           value={brightness}
           isDisabled={isBrightnessDisabled || isDisabled}
@@ -496,7 +502,7 @@ export default function CameraSettings({
           step={videoTrackCapabilitiesAny?.brightness?.step}
           onChange={handleBrightnessChange}
         />
-        <SettingSlider
+        <SettingsSlider
           label="Contrast"
           value={contrast}
           isDisabled={isContrastDisabled || isDisabled}
@@ -505,7 +511,7 @@ export default function CameraSettings({
           step={videoTrackCapabilitiesAny?.contrast?.step}
           onChange={handleContrastChange}
         />
-        <SettingSlider
+        <SettingsSlider
           label="Saturation"
           value={saturation}
           isDisabled={isSaturationDisabled || isDisabled}
@@ -514,7 +520,7 @@ export default function CameraSettings({
           step={videoTrackCapabilitiesAny?.saturation?.step}
           onChange={handleSaturationChange}
         />
-        <SettingSlider
+        <SettingsSlider
           label="Sharpness"
           value={sharpness}
           isDisabled={isSharpnessDisabled || isDisabled}
