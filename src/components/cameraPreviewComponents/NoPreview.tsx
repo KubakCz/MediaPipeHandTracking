@@ -1,17 +1,20 @@
 import { Box } from "@chakra-ui/react";
-import { CSSProperties } from "react";
+
+interface NoPreviewProps {
+  /**
+   * Aspect ratio of the preview.
+   */
+  aspectRatio?: number;
+  /**
+   * Children to display over the preview.
+   */
+  children?: React.ReactNode;
+}
 
 /**
  * Component to display when there is no camera preview available.
  */
-export default function NoPreview({
-  aspectRatio = 16 / 9,
-  children,
-}: {
-  aspectRatio?: number;
-  height?: CSSProperties["height"];
-  children?: React.ReactNode;
-}) {
+export default function NoPreview({ aspectRatio = 16 / 9, children }: NoPreviewProps) {
   return (
     <Box
       aspectRatio={aspectRatio}
@@ -23,7 +26,7 @@ export default function NoPreview({
       justifyContent="center"
       fontWeight="semibold"
       fontSize="lg"
-      bg="gray.100"
+      bg="gray.200"
       borderWidth="1px"
     >
       {children}

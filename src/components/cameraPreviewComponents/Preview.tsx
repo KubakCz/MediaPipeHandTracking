@@ -1,25 +1,29 @@
-import { CSSProperties, useEffect } from "react";
 import NoPreview from "./NoPreview";
-import { Button } from "@chakra-ui/button";
 import { Box } from "@chakra-ui/react";
 import VideoText from "./VideoText";
 
-/**
- * Props for the Preview component.
- */
 interface PreviewProps {
+  /**
+   * MediaStream to display.
+   */
   stream: MediaStream | null;
+  /**
+   * Reference to the canvas element to draw the hand tracking results.
+   */
   canvasRef: React.MutableRefObject<HTMLCanvasElement | null>;
+  /**
+   * Children to display over the preview.
+   */
   children?: React.ReactNode;
+  /**
+   * Color to overlay on top of the preview.
+   * Transparent by default.
+   */
   overlayColor?: string;
 }
 
 /**
  * Component to display the camera preview and the hand tracking results.
- * @param stream - MediaStream to display.
- * @param canvasRef - Reference to the canvas element to draw the hand tracking results.
- * @param height - Height of the preview.
- * @returns Camera preview component.
  */
 export default function Preview({ stream, canvasRef, children, overlayColor }: PreviewProps) {
   // It may take some time for the stream to be ready
@@ -58,9 +62,11 @@ export default function Preview({ stream, canvasRef, children, overlayColor }: P
           className="output_canvas"
           ref={(canvas) => {
             if (canvas) {
+              // Set the canvas resolution to match the real size on the screen
               const boundingRect = canvas.getBoundingClientRect();
               canvas.width = boundingRect.width;
               canvas.height = boundingRect.height;
+
               canvasRef.current = canvas;
             }
           }}

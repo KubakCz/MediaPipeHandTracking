@@ -1,7 +1,7 @@
 // Worker script for asynchronous processing of video frames by HandLandmarker.
 
 import { FilesetResolver, HandLandmarker, HandLandmarkerResult } from "@mediapipe/tasks-vision";
-import { getDecoderConfig } from "../CameraPreview/video/videoSettings";
+import { getDecoderConfig } from "../video/videoSettings";
 import * as messages from "./handLandmarkerMessages";
 
 let handLandmarker: HandLandmarker;

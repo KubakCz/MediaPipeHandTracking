@@ -3,13 +3,10 @@
 import { useEffect, useReducer, useRef, useState } from "react";
 import { ChakraProvider, Flex, VStack, useToast } from "@chakra-ui/react";
 import { theme } from "./theme";
-import DeviceSelect from "./DeviceSelect";
-import WebcamPreview from "./CameraPreview/WebcamPreview";
-import RightMenu from "./RightMenu/RightMenu";
-import BottomMenu from "./BottomMenu/BottomMenu";
-import { HandLandmarker } from "./HandLandmarker/HandLandmarker";
-import { handDataToJSON } from "./HandLandmarker/HandDataToJson";
 import { dateTimeString } from "./utils/dateTimeFormat";
+import { HandLandmarker } from "./handLandmarker/handLandmarker";
+import { handDataToJSON } from "./handLandmarker/handDataToJson";
+import { BottomMenu, DeviceSelect, RightMenu, WebcamPreview } from "../components";
 
 export default function App() {
   const [directoryHandle, setDirectoryHandle] = useState<FileSystemDirectoryHandle | undefined>();
@@ -189,7 +186,7 @@ export default function App() {
                 directoryHandle={directoryHandle}
                 onDirectorySelect={handleDirectorySelect}
                 isRecording={isRecording}
-                isDisabled={isRecording || isProcessing}
+                directorySelectDisabled={isRecording || isProcessing}
                 redordButtonDisabled={
                   directoryHandle === undefined || videoStream === undefined || isProcessing
                 }
@@ -202,7 +199,7 @@ export default function App() {
               videoTrack={getCurrentVideoTrack()}
               handLandmarker={handLandmarkerRef.current}
               onResolutionChange={forceUpdate}
-              isDisabled={isRecording}
+              cameraSettingsDisabled={isRecording}
             />
           </VStack>
         </Flex>
