@@ -1,5 +1,8 @@
 import { CSSProperties, useEffect } from "react";
 import NoPreview from "./NoPreview";
+import { Button } from "@chakra-ui/button";
+import { Box } from "@chakra-ui/react";
+import VideoText from "./VideoText";
 
 /**
  * Props for the Preview component.
@@ -7,8 +10,8 @@ import NoPreview from "./NoPreview";
 interface PreviewProps {
   stream: MediaStream | null;
   canvasRef: React.MutableRefObject<HTMLCanvasElement | null>;
-  aspectRatio?: number;
-  height?: CSSProperties["height"];
+  children?: React.ReactNode;
+  overlayColor?: string;
 }
 
 /**
@@ -18,23 +21,21 @@ interface PreviewProps {
  * @param height - Height of the preview.
  * @returns Camera preview component.
  */
-export default function Preview({
-  stream,
-  canvasRef,
-  aspectRatio = 4 / 3,
-  height = "480px",
-}: PreviewProps) {
-  // // Resize the canvas to match the preview size
-  // if (canvasRef.current) {
-  //   canvasRef.current.width = canvasRef.current.offsetWidth;
-  //   canvasRef.current.height = canvasRef.current.offsetHeight;
-  // }
-
+export default function Preview({ stream, canvasRef, children, overlayColor }: PreviewProps) {
   // It may take some time for the stream to be ready
-  if (!stream) return <NoPreview height={height}>Waiting for the camera...</NoPreview>;
+  if (!stream)
+    return (
+      <NoPreview>
+        <VideoText text={"Waiting for the camera"} spinner={true} />
+      </NoPreview>
+    );
+
+  const videoTrack = stream.getVideoTracks()[0];
+  const settings = videoTrack.getSettings();
+  const aspectRatio = settings.aspectRatio || 16 / 9;
 
   return (
-    <div style={{ height: height, aspectRatio: aspectRatio, margin: "16px" }}>
+    <div style={{ aspectRatio: aspectRatio, height: "480px" /* width: "100%" */ }}>
       <div style={{ position: "relative", width: "100%", height: "100%" }}>
         <video
           autoPlay
@@ -44,8 +45,8 @@ export default function Preview({
             position: "absolute",
             left: "0px",
             top: "0px",
-            height: height,
             aspectRatio: aspectRatio,
+            height: "100%",
           }}
           ref={(video) => {
             if (video) {
@@ -67,10 +68,21 @@ export default function Preview({
             position: "absolute",
             left: "0px",
             top: "0px",
-            height: height,
             aspectRatio: aspectRatio,
+            height: "100%",
           }}
-        ></canvas>
+        />
+        <Box
+          position="absolute"
+          left="0px"
+          top="0px"
+          h="100%"
+          w="100%"
+          bg={overlayColor || "transparent"}
+          zIndex={1000}
+        >
+          {children}
+        </Box>
       </div>
     </div>
   );

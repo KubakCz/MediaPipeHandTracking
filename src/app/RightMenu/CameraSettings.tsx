@@ -1,35 +1,43 @@
 import { useEffect, useState } from "react";
-import { CameraCapabilities } from "./CameraCapabilities";
-import CameraSettingsSwitch from "./CameraSettingSwitch";
-import CameraSettingSlider from "./CameraSettingSlider";
-import CameraSettingsDropdown from "./CameraSettingsDropdown";
-import { RESOLUTIONS, Resolution } from "./Resolution";
+import { CameraCapabilities } from "../utils/cameraCapabilities";
+import SettingSlider from "./Components/SettingSlider";
+import SettingsDropdown from "./Components/SettingsDropdown";
+import { RESOLUTIONS, Resolution } from "../utils/resolution";
 import { HandLandmarker } from "../HandLandmarker/HandLandmarker";
+import { Icon, VStack } from "@chakra-ui/react";
+import SettingsCategory from "./Components/SettingsCategory";
+import TwoWaySwitch from "./Components/TwoWaySwitch";
+import AccordionMenuItem from "./Components/AccordionMenuItem";
+import { MdVideoCameraBack } from "react-icons/md";
 
 /**
  * Properties for the camera settings form.
  */
 interface CameraSettingsProps {
   videoTrack: MediaStreamTrack | null;
-  handLandmarker: HandLandmarker | null;
+  handLandmarker: HandLandmarker | undefined;
   onResolutionChange?: (resolution: Resolution) => void;
+  isDisabled?: boolean;
 }
 
 /**
+ *
  * Camera settings form component.
  * Controls settings of the provided video track and hand tracking worker.
+ * @param isDisabled - Disables all the settings if true.
  */
 export default function CameraSettings({
   videoTrack,
   handLandmarker,
   onResolutionChange,
+  isDisabled,
 }: CameraSettingsProps) {
   // #region State variables
   const [videoTrackCapabilities, setVideoTrackCapabilities] =
     useState<MediaTrackCapabilities | null>(null);
 
   // Tracking
-  const [trackTwoHands, setTrackTwoHands] = useState<boolean>(false);
+  const [trackTwoHands, setTrackTwoHands] = useState<boolean>(true);
   const [settingNumHands, setSettingNumHands] = useState<boolean>(false);
 
   // Exposure
@@ -225,8 +233,8 @@ export default function CameraSettings({
       .then(() => {
         const settings = videoTrack!.getSettings();
         console.log(`Resolution set to ${settings.width}x${settings.height}`);
+        if (onResolutionChange) onResolutionChange(resolution);
       });
-    if (onResolutionChange) onResolutionChange(resolution);
   }
 
   function handleFrameRateChange(frameRate: number) {
@@ -370,124 +378,153 @@ export default function CameraSettings({
 
   // #region Return
   return (
-    <>
-      <CameraSettingsSwitch
-        label="Track Two Hands"
-        value={trackTwoHands}
-        isDisabled={isTrackTwoHandsDisabled}
-        onChange={handleTrackTwoHandsChange}
-      />
-      <CameraSettingsSwitch
-        label="Autoexposure"
-        value={autoexposure}
-        isDisabled={isAutoexposureDisabled}
-        onChange={handleAutoexposureChange}
-      />
-      <CameraSettingSlider
-        label="Exposure Time"
-        value={exposureTime}
-        isDisabled={isExposureTimeDisabled}
-        min={videoTrackCapabilitiesAny?.exposureTime?.min}
-        max={videoTrackCapabilitiesAny?.exposureTime?.max}
-        step={videoTrackCapabilitiesAny?.exposureTime?.step}
-        onChange={handleExposureTimeChange}
-      />
-      <CameraSettingSlider
-        label="Exposure Compensation"
-        value={exposureCompensation}
-        isDisabled={isExposureCompensationDisabled}
-        min={videoTrackCapabilitiesAny?.exposureCompensation?.min}
-        max={videoTrackCapabilitiesAny?.exposureCompensation?.max}
-        step={videoTrackCapabilitiesAny?.exposureCompensation?.step}
-        onChange={handleExposureCompensationChange}
-      />
-      <CameraSettingsSwitch
-        label="Autofocus"
-        value={autofocus}
-        isDisabled={isAutofocusDisabled}
-        onChange={handleAutofocusChange}
-      />
-      <CameraSettingSlider
-        label="Focus Distance"
-        value={focusDistance}
-        isDisabled={isFocusDistanceDisabled}
-        min={videoTrackCapabilitiesAny?.focusDistance?.min}
-        max={videoTrackCapabilitiesAny?.focusDistance?.max}
-        step={videoTrackCapabilitiesAny?.focusDistance?.step}
-        onChange={handleFocusDistanceChange}
-      />
-      <CameraSettingsSwitch
-        label="Auto White Balance"
-        value={autoWhiteBalance}
-        isDisabled={isAutoWhiteBalanceDisabled}
-        onChange={handleAutoWhiteBalanceChange}
-      />
-      <CameraSettingSlider
-        label="Color Temperature"
-        value={whiteBalance}
-        isDisabled={isWhiteBalanceDisabled}
-        min={videoTrackCapabilitiesAny?.colorTemperature?.min}
-        max={videoTrackCapabilitiesAny?.colorTemperature?.max}
-        step={videoTrackCapabilitiesAny?.colorTemperature?.step}
-        onChange={handleWhiteBalanceChange}
-      />
-      <CameraSettingsDropdown
-        label="Resolution"
-        value={resolution}
-        isDisabled={isResolutionDisabled}
-        options={
-          videoTrackCapabilities
-            ? generateResolutions(videoTrackCapabilities)
-            : [new Resolution(1280, 720)]
+    <AccordionMenuItem
+      label="Camera Settings"
+      icon={
+        <Icon as={MdVideoCameraBack} boxSize={30} color={videoTrack ? "brand.400" : "red.600"} />
+      }
+    >
+      <VStack alignItems="stretch" my={2}>
+        <TwoWaySwitch
+          labelFalse="Track One Hand"
+          labelTrue="Two Hands"
+          value={trackTwoHands}
+          isDisabled={isTrackTwoHandsDisabled || isDisabled}
+          onChange={handleTrackTwoHandsChange}
+        />
+        <SettingsDropdown
+          label="Resolution"
+          value={resolution}
+          isDisabled={isResolutionDisabled || isDisabled}
+          options={
+            videoTrackCapabilities
+              ? generateResolutions(videoTrackCapabilities)
+              : [new Resolution(1280, 720)]
+          }
+          onChange={handleResolutionChange}
+        />
+        <SettingsDropdown
+          label="Frame Rate"
+          value={frameRate}
+          isDisabled={isFrameRateDisabled || isDisabled}
+          options={
+            videoTrackCapabilities
+              ? generateFrameRates(videoTrackCapabilities.frameRate!.max!)
+              : [30]
+          }
+          onChange={handleFrameRateChange}
+        />
+      </VStack>
+
+      <SettingsCategory
+        name="Exposure"
+        autoValue={autoexposure}
+        isDisabled={isAutoexposureDisabled || isDisabled}
+        onAutoChange={handleAutoexposureChange}
+      >
+        <SettingSlider
+          label="Exposure Time"
+          value={exposureTime}
+          isDisabled={isExposureTimeDisabled || isDisabled}
+          min={videoTrackCapabilitiesAny?.exposureTime?.min}
+          max={videoTrackCapabilitiesAny?.exposureTime?.max}
+          step={videoTrackCapabilitiesAny?.exposureTime?.step}
+          onChange={handleExposureTimeChange}
+        />
+        {/* <SettingSlider
+          label="Exposure Compensation"
+          value={exposureCompensation}
+          isDisabled={isExposureCompensationDisabled || isDisabled}
+          min={videoTrackCapabilitiesAny?.exposureCompensation?.min}
+          max={videoTrackCapabilitiesAny?.exposureCompensation?.max}
+          step={videoTrackCapabilitiesAny?.exposureCompensation?.step}
+          onChange={handleExposureCompensationChange}
+        /> */}
+      </SettingsCategory>
+
+      <SettingsCategory
+        name="Focus"
+        autoValue={autofocus}
+        isDisabled={isAutofocusDisabled || isDisabled}
+        onAutoChange={handleAutofocusChange}
+      >
+        <SettingSlider
+          label="Focus Distance"
+          value={focusDistance}
+          isDisabled={isFocusDistanceDisabled || isDisabled}
+          min={videoTrackCapabilitiesAny?.focusDistance?.min}
+          max={videoTrackCapabilitiesAny?.focusDistance?.max}
+          step={videoTrackCapabilitiesAny?.focusDistance?.step}
+          onChange={handleFocusDistanceChange}
+        />
+      </SettingsCategory>
+
+      <SettingsCategory
+        name="White Balance"
+        autoLabel={"Auto WB"}
+        autoValue={autoWhiteBalance}
+        isDisabled={isAutoWhiteBalanceDisabled || isDisabled}
+        onAutoChange={handleAutoWhiteBalanceChange}
+      >
+        <SettingSlider
+          label="Color Temperature"
+          value={whiteBalance}
+          isDisabled={isWhiteBalanceDisabled || isDisabled}
+          min={videoTrackCapabilitiesAny?.colorTemperature?.min}
+          max={videoTrackCapabilitiesAny?.colorTemperature?.max}
+          step={videoTrackCapabilitiesAny?.colorTemperature?.step}
+          onChange={handleWhiteBalanceChange}
+        />
+      </SettingsCategory>
+
+      <SettingsCategory
+        name="Other"
+        isDisabled={
+          isDisabled ||
+          (isBrightnessDisabled &&
+            isContrastDisabled &&
+            isSaturationDisabled &&
+            isSharpnessDisabled)
         }
-        onChange={handleResolutionChange}
-      />
-      <CameraSettingsDropdown
-        label="Frame Rate"
-        value={frameRate}
-        isDisabled={isFrameRateDisabled}
-        options={
-          videoTrackCapabilities ? generateFrameRates(videoTrackCapabilities.frameRate!.max!) : [30]
-        }
-        onChange={handleFrameRateChange}
-      />
-      <CameraSettingSlider
-        label="Brightness"
-        value={brightness}
-        isDisabled={isBrightnessDisabled}
-        min={videoTrackCapabilitiesAny?.brightness?.min}
-        max={videoTrackCapabilitiesAny?.brightness?.max}
-        step={videoTrackCapabilitiesAny?.brightness?.step}
-        onChange={handleBrightnessChange}
-      />
-      <CameraSettingSlider
-        label="Contrast"
-        value={contrast}
-        isDisabled={isContrastDisabled}
-        min={videoTrackCapabilitiesAny?.contrast?.min}
-        max={videoTrackCapabilitiesAny?.contrast?.max}
-        step={videoTrackCapabilitiesAny?.contrast?.step}
-        onChange={handleContrastChange}
-      />
-      <CameraSettingSlider
-        label="Saturation"
-        value={saturation}
-        isDisabled={isSaturationDisabled}
-        min={videoTrackCapabilitiesAny?.saturation?.min}
-        max={videoTrackCapabilitiesAny?.saturation?.max}
-        step={videoTrackCapabilitiesAny?.saturation?.step}
-        onChange={handleSaturationChange}
-      />
-      <CameraSettingSlider
-        label="Sharpness"
-        value={sharpness}
-        isDisabled={isSharpnessDisabled}
-        min={videoTrackCapabilitiesAny?.sharpness?.min}
-        max={videoTrackCapabilitiesAny?.sharpness?.max}
-        step={videoTrackCapabilitiesAny?.sharpness?.step}
-        onChange={handleSharpnessChange}
-      />
-    </>
+      >
+        <SettingSlider
+          label="Brightness"
+          value={brightness}
+          isDisabled={isBrightnessDisabled || isDisabled}
+          min={videoTrackCapabilitiesAny?.brightness?.min}
+          max={videoTrackCapabilitiesAny?.brightness?.max}
+          step={videoTrackCapabilitiesAny?.brightness?.step}
+          onChange={handleBrightnessChange}
+        />
+        <SettingSlider
+          label="Contrast"
+          value={contrast}
+          isDisabled={isContrastDisabled || isDisabled}
+          min={videoTrackCapabilitiesAny?.contrast?.min}
+          max={videoTrackCapabilitiesAny?.contrast?.max}
+          step={videoTrackCapabilitiesAny?.contrast?.step}
+          onChange={handleContrastChange}
+        />
+        <SettingSlider
+          label="Saturation"
+          value={saturation}
+          isDisabled={isSaturationDisabled || isDisabled}
+          min={videoTrackCapabilitiesAny?.saturation?.min}
+          max={videoTrackCapabilitiesAny?.saturation?.max}
+          step={videoTrackCapabilitiesAny?.saturation?.step}
+          onChange={handleSaturationChange}
+        />
+        <SettingSlider
+          label="Sharpness"
+          value={sharpness}
+          isDisabled={isSharpnessDisabled || isDisabled}
+          min={videoTrackCapabilitiesAny?.sharpness?.min}
+          max={videoTrackCapabilitiesAny?.sharpness?.max}
+          step={videoTrackCapabilitiesAny?.sharpness?.step}
+          onChange={handleSharpnessChange}
+        />
+      </SettingsCategory>
+    </AccordionMenuItem>
   );
   // #endregion Return
 }

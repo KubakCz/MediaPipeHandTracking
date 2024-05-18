@@ -1,5 +1,6 @@
-import { Input } from "@chakra-ui/react";
+import { Input, VStack, Text } from "@chakra-ui/react";
 import { useEffect, useState } from "react";
+import SettingsComponent from "./SettingsComponent";
 
 interface PortInputProps {
   label: string;
@@ -43,14 +44,14 @@ export default function PortInput({ label, value, onChange }: PortInputProps) {
   };
 
   return (
-    <>
-      <p>{label}</p>
+    <SettingsComponent label={label}>
       <Input
+        size="sm"
         value={portString}
         onChange={handleInputChange}
         isInvalid={!isValid}
         placeholder="Port Number"
       />
-    </>
+    </SettingsComponent>
   );
 }

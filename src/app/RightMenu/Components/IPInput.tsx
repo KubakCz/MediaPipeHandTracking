@@ -1,9 +1,7 @@
-import { Input } from "@chakra-ui/react";
+import { Heading, Input, Text, VStack } from "@chakra-ui/react";
 import { useEffect, useState } from "react";
+import SettingsComponent from "./SettingsComponent";
 
-/**
- * Properties for the IP address input component.
- */
 interface IPInputProps {
   label: string;
   value: string | null;
@@ -18,7 +16,7 @@ const ipPattern =
  * Checks if the input is a valid IP address.
  */
 export default function IPInput({ label, value, onChange }: IPInputProps) {
-  const [ipString, setIpString] = useState<string>("");
+  const [ipString, setIpString] = useState<string>("127.0.0.1");
 
   useEffect(() => {
     if (value) {
@@ -41,14 +39,14 @@ export default function IPInput({ label, value, onChange }: IPInputProps) {
   };
 
   return (
-    <>
-      <p>{label}</p>
+    <SettingsComponent label={label}>
       <Input
+        size="sm"
         value={ipString}
         onChange={handleInputChange}
         isInvalid={!ipPattern.test(ipString)}
         placeholder="IP Address"
       />
-    </>
+    </SettingsComponent>
   );
 }

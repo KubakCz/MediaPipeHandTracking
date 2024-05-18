@@ -1,10 +1,11 @@
 import { Select } from "@chakra-ui/react";
+import SettingsComponent from "./SettingsComponent";
 
 interface ToStringable {
   toString(): string;
 }
 
-interface CameraSettingsDropdownProps<T extends ToStringable> {
+interface SettingsDropdownProps<T extends ToStringable> {
   label: string;
   value: T;
   options: T[];
@@ -13,15 +14,15 @@ interface CameraSettingsDropdownProps<T extends ToStringable> {
 }
 
 /**
- * A dropdown component for camera settings.
+ * A dropdown component for settings.
  */
-export default function CameraSettingsDropdown<T extends ToStringable>({
+export default function SettingsDropdown<T extends ToStringable>({
   label,
   value,
   options,
   isDisabled,
   onChange,
-}: CameraSettingsDropdownProps<T>) {
+}: SettingsDropdownProps<T>) {
   function handleOnChange(event: React.ChangeEvent<HTMLSelectElement>) {
     const selectedValue = options.find((option) => option.toString() === event.target.value);
     if (selectedValue) {
@@ -30,15 +31,19 @@ export default function CameraSettingsDropdown<T extends ToStringable>({
   }
 
   return (
-    <>
-      <label>{label}</label>
-      <Select value={value.toString()} isDisabled={isDisabled || false} onChange={handleOnChange}>
+    <SettingsComponent label={label} isDisabled={isDisabled}>
+      <Select
+        value={value.toString()}
+        isDisabled={isDisabled || false}
+        onChange={handleOnChange}
+        mb={1}
+      >
         {options.map((option, index) => (
           <option key={index} value={option.toString()}>
             {option.toString()}
           </option>
         ))}
       </Select>
-    </>
+    </SettingsComponent>
   );
 }

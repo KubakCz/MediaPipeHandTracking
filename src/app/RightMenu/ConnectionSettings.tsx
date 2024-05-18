@@ -1,12 +1,15 @@
 import { useEffect, useState } from "react";
-import IPInput from "./IPInput";
-import PortInput from "./PortInput";
+import IPInput from "./Components/IPInput";
+import PortInput from "./Components/PortInput";
 import { ConnectionType, ConnectionSettings } from "../requests/models";
-import { Button, Select, Spinner, useToast } from "@chakra-ui/react";
+import { Button, Text, Select, Spinner, VStack, useToast, Icon } from "@chakra-ui/react";
 import * as requests from "../requests/requests";
+import SettingsDropdown from "./Components/SettingsDropdown";
+import AccordionMenuItem from "./Components/AccordionMenuItem";
+import { IoCheckmarkCircle, IoCloseCircle } from "react-icons/io5";
 
 /**
- * Connection settings form component. 
+ * Connection settings form component.
  * Used to connect to a NatNet server.
  */
 export default function ConnectionSettings() {
@@ -15,11 +18,13 @@ export default function ConnectionSettings() {
   const [connectingInProgress, setConnectingInProgress] = useState<boolean>(false);
 
   // State variables for the connection settings
-  const [localIP, setLocalIP] = useState<string | null>(null);
-  const [serverIP, setServerIP] = useState<string | null>(null);
-  const [commandPort, setCommandPort] = useState<number | null>(null);
-  const [dataPort, setDataPort] = useState<number | null>(null);
+  const [localIP, setLocalIP] = useState<string | null>("127.0.0.1");
+  const [serverIP, setServerIP] = useState<string | null>("127.0.0.1");
+  const [commandPort, setCommandPort] = useState<number | null>(0);
+  const [dataPort, setDataPort] = useState<number | null>(0);
   const [connectionType, setConnectionType] = useState<ConnectionType>(ConnectionType.Multicast);
+
+  const toast = useToast();
 
   /**
    * Checks if all connection settings are valid.
@@ -86,58 +91,76 @@ export default function ConnectionSettings() {
    * Effect hook to get the connection settings when the component mounts.
    */
   useEffect(() => {
+    console.log("ConnectionSettings mounted");
     setConnectingInProgress(true);
     // Try to get the connection settings to currently connected NatNet server
-    requests.getConnectionSettings().then((settings) => {
-      if (settings) {
-        setIsConnected(true);
-        setLocalIP(settings.localIP);
-        setServerIP(settings.serverIP);
-        setCommandPort(settings.commandPort);
-        setDataPort(settings.dataPort);
-        setConnectionType(settings.connectionType);
+    requests
+      .getConnectionSettings()
+      .then((settings) => {
+        // Backend running...
+        if (settings) {
+          // Already connected => set the connection settings
+          setIsConnected(true);
+          setLocalIP(settings.localIP);
+          setServerIP(settings.serverIP);
+          setCommandPort(settings.commandPort);
+          setDataPort(settings.dataPort);
+          setConnectionType(settings.connectionType);
+        } else {
+          // Not connected => get the default connection settings
+          setIsConnected(false);
+          requests.getDefaultConnectionSettings().then((settings) => {
+            if (settings) {
+              setLocalIP(settings.localIP);
+              setServerIP(settings.serverIP);
+              setCommandPort(settings.commandPort);
+              setDataPort(settings.dataPort);
+              setConnectionType(settings.connectionType);
+            }
+          });
+        }
+      })
+      .catch((error) => {
+        // Failed to connect
+        console.log(error);
+      })
+      .finally(() => {
         setConnectingInProgress(false);
-      } else {
-        // If not connected, get the default connection settings
-        setIsConnected(false);
-        requests.getDefaultConnectionSettings().then((settings) => {
-          if (settings) {
-            setLocalIP(settings.localIP);
-            setServerIP(settings.serverIP);
-            setCommandPort(settings.commandPort);
-            setDataPort(settings.dataPort);
-            setConnectionType(settings.connectionType);
-          }
-          setConnectingInProgress(false);
-        });
-      }
-    });
+        console.log("ConnectionSettings unmounted");
+      });
   }, []);
 
-  const toast = useToast();
+  console.log("ConnectionSettings rendered", connectingInProgress, allValid());
+
   return (
-    <>
-      <p>{isConnected ? "Connected to NatNet server" : "Not connected to NatNetServer"}</p>
+    <AccordionMenuItem
+      label="Motive Connection"
+      icon={
+        isConnected ? (
+          <Icon as={IoCheckmarkCircle} boxSize={30} color="brand.400" />
+        ) : (
+          <Icon as={IoCloseCircle} boxSize={30} color="red.600" />
+        )
+      }
+    >
       <IPInput label="Local IP" value={localIP} onChange={setLocalIP} />
       <IPInput label="Server IP" value={serverIP} onChange={setServerIP} />
       <PortInput label="Command Port" value={commandPort} onChange={setCommandPort} />
       <PortInput label="Data Port" value={dataPort} onChange={setDataPort} />
-      <div>
-        <p>Connection Type</p>
-        <Select
-          value={connectionType}
-          onChange={(e) => setConnectionType(e.target.value as ConnectionType)}
-        >
-          {Object.values(ConnectionType).map((type) => (
-            <option key={type} value={type}>
-              {type}
-            </option>
-          ))}
-        </Select>
-      </div>
-      <Button onClick={handleConnect} isDisabled={connectingInProgress || !allValid()}>
+      <SettingsDropdown
+        label="Connection Type"
+        value={connectionType}
+        options={Object.values(ConnectionType)}
+        onChange={setConnectionType}
+      />
+      <Button
+        onClick={handleConnect}
+        isDisabled={connectingInProgress || !allValid()}
+        maxWidth="120"
+        size="md"
+      >
         {connectingInProgress ? <Spinner /> : "Connect"}
       </Button>
-    </>
+    </AccordionMenuItem>
   );
 }

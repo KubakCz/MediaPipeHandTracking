@@ -1,98 +1,56 @@
-import { CSSProperties, useState, useEffect, useRef, useCallback } from "react";
+import { useState, useEffect, useRef, useCallback, MutableRefObject } from "react";
 import { drawHands } from "./Drawing";
-import { handDataToJSON } from "./HandDataToJson";
-import CameraSettings from "./CameraSettings/CameraSettings";
-import { HandLandmarker } from "./HandLandmarker/HandLandmarker";
+import { HandLandmarker } from "../HandLandmarker/HandLandmarker";
 import NoPreview from "./Preview/NoPreview";
 import Preview from "./Preview/Preview";
-import RecordButton from "./RecordButton";
 import { VideoProcessor } from "./VideoProcessing";
-import { Resolution } from "./CameraSettings/Resolution";
 import * as requests from "../requests/requests";
-import { useToast } from "@chakra-ui/react";
-import { dateTimeString } from "../HelperFunctions";
+import { Heading, useToast } from "@chakra-ui/react";
+import VideoText from "./Preview/VideoText";
 
 interface WebcamPreviewProps {
-  device: InputDeviceInfo | undefined;
+  videoStream: MediaStream | null | undefined;
   directoryHandle: FileSystemDirectoryHandle | undefined;
-  height?: CSSProperties["height"];
+  handLandmarkerRef: MutableRefObject<HandLandmarker | undefined>;
+  isRecording: boolean;
+  isProcessing?: boolean;
+  onRecordingStop?: (videoChunks: EncodedVideoChunk[], startTime: number) => Promise<void>;
+  onStartRecordingFailed?: () => void;
 }
 
-export default function WebcamPreview({ device, directoryHandle, height }: WebcamPreviewProps) {
+export default function WebcamPreview({
+  videoStream,
+  directoryHandle,
+  handLandmarkerRef,
+  isRecording,
+  isProcessing,
+  onRecordingStop,
+  onStartRecordingFailed,
+}: WebcamPreviewProps) {
   // Video processing and recording
   const videoProcessorRef = useRef<VideoProcessor>(new VideoProcessor(handleFrameProcessed));
-  const [videoTrack, setVideoTrack] = useState<MediaStreamTrack | null>(null); // Video track for camera settings
   const [recordingInProgress, setRecordingInProgress] = useState(false); // Recording state - true from startRecording to stopRecording
-  const [processingInProgress, setProcessingInProgress] = useState(false); // Processing state - true while processing video
-  const [resolution, setResolution] = useState(new Resolution(1280, 720));
   const [recordingOnServer, setRecordingOnServer] = useState<boolean>();
 
   // Hand visualization
-  const handLandmarkerRef = useRef<HandLandmarker>();
   const canvasRef = useRef<HTMLCanvasElement | null>(null);
 
-  /**
-   * Effect for initializing HandLandmarker
-   */
-  useEffect(() => {
-    console.log("Initializing HandLandmarker");
-    // Initialize handLandmarker
-    handLandmarkerRef.current = new HandLandmarker(
-      new Worker(new URL("HandLandmarker/HandLandmarkerWorker.ts", import.meta.url))
-    );
-    handLandmarkerRef.current
-      .init()
-      .then(() => {
-        console.log("HandLandmarker initialized");
-      })
-      .catch((error) => {
-        console.error("Error initializing HandLandmarker", error);
-        window.alert(
-          "Error initializing HandLandmarker. Please reload the page. You can find more information in the console."
-        );
-      });
-  }, []);
+  const toast = useToast();
 
   /**
-   * Effect switching video stream based on the selected device.
+   * Effect for updating the video stream in the video processor.
    */
   useEffect(() => {
-    console.log(device);
-    if (videoProcessorRef.current.isRecording)
-      throw new Error("Cannot switch camera while recording");
-
-    // Stop old camera
+    // Stop video processor
     if (videoProcessorRef.current.isProcessing) {
       videoProcessorRef.current.stopProcessing();
-      setVideoTrack(null);
     }
 
-    if (!device) return;
+    if (!videoStream) return;
 
-    // Set new camera
-    const deviceCapabilities = device.getCapabilities();
-    const maxFps = deviceCapabilities.frameRate?.max || 30;
-    const maxWidth = deviceCapabilities.width?.max || 1280;
-    const maxHeight = deviceCapabilities.height?.max || 720;
-    const constraints: MediaStreamConstraints = {
-      video: {
-        deviceId: device.deviceId,
-        width: 1920 <= maxWidth ? 1920 : 1280, // Use 1080p if available, otherwise 720p
-        height: 1080 <= maxHeight ? 1080 : 720,
-        frameRate: maxFps, // Use the highest possible frame rate
-      },
-    };
-    navigator.mediaDevices
-      .getUserMedia(constraints)
-      .then((stream) => {
-        // Set up video processor
-        videoProcessorRef.current.startProcessing(stream);
-        setVideoTrack(stream.getVideoTracks()[0]);
-      })
-      .catch((error) => {
-        console.error("Error getting user media", error);
-      });
-  }, [device]);
+    // Set up video processor
+    videoProcessorRef.current.startProcessing(videoStream.getTracks()[0]);
+  }, [videoStream]);
 
   /**
    * Callback to process video frame with HandLandmarker.
@@ -112,18 +70,9 @@ export default function WebcamPreview({ device, directoryHandle, height }: Webca
   }
 
   /**
-   * Handle record button click
-   * Start or stop recording video depending on the current state.
-   */
-  function handleRecord() {
-    if (videoProcessorRef.current.isRecording) stopRecording();
-    else startRecording();
-  }
-
-  /**
    * Starts video recording.
    */
-  async function startRecording() {
+  const startRecording = useCallback(async () => {
     if (recordingInProgress) throw new Error("Recording already in progress");
     if (!directoryHandle) throw new Error("No directory selected");
 
@@ -133,7 +82,7 @@ export default function WebcamPreview({ device, directoryHandle, height }: Webca
       // Connected to a server
       const recordingStatus = await requests.isRecording();
       if (recordingStatus === undefined) {
-        // Server connected, but failed to get recording status
+        // Server connected, but failed to get recording status => Start recording only on the client side
         toast({
           title: "Failed to get recording status",
           description:
@@ -144,7 +93,7 @@ export default function WebcamPreview({ device, directoryHandle, height }: Webca
         });
         connectionSettings = null;
       } else if (recordingStatus === true) {
-        // Recording already in progress on the server
+        // Recording already in progress on the server => Do not start recording
         toast({
           title: "Recording already in progress",
           description:
@@ -153,6 +102,7 @@ export default function WebcamPreview({ device, directoryHandle, height }: Webca
           duration: 10000,
           isClosable: true,
         });
+        onStartRecordingFailed?.();
         return;
       } else {
         // Else recording status is synced with the server => start recording on the server
@@ -177,17 +127,20 @@ export default function WebcamPreview({ device, directoryHandle, height }: Webca
     await videoProcessorRef.current.startRecording(
       directoryHandle,
       undefined, // TODO: Add file name input (optional)
-      (e) => console.error(e)
+      (e) => {
+        console.error(e);
+        if (onStartRecordingFailed) onStartRecordingFailed();
+      }
     );
 
     setRecordingInProgress(true);
-  }
+  }, [directoryHandle, onStartRecordingFailed, recordingInProgress, toast]);
 
   /**
    * Stops video recording and saves the result.
    * Processes the recorded video with HandLandmarker and saves the hand data.
    */
-  async function stopRecording() {
+  const stopRecording = useCallback(async () => {
     if (!recordingInProgress) throw new Error("Recording not in progress");
 
     // Stop recording on the server
@@ -214,65 +167,37 @@ export default function WebcamPreview({ device, directoryHandle, height }: Webca
     );
 
     setRecordingInProgress(false); // Reset recording state
-    setProcessingInProgress(true); // Set processing state
 
-    // Process the recorded video and save the result
-    handLandmarkerRef
-      .current!.processVideo(vp.recordedChunks)
-      .then(async (hands) => {
-        // Save hand data
-        let fileWriter: FileSystemWritableFileStream | undefined;
-        try {
-          console.log("Saving hand data");
-          const fileHandle = await directoryHandle?.getFileHandle(
-            `handData_${dateTimeString(new Date(vp.recordingStartTime))}.json`, // TODO: Add file name input (optional)
-            {
-              create: true,
-            }
-          );
-          fileWriter = await fileHandle?.createWritable();
-          await fileWriter?.write(handDataToJSON(hands));
-        } catch (e) {
-          console.error("Error saving hand data", e);
-        } finally {
-          if (fileWriter) {
-            await fileWriter.close();
-            console.log("Video saved successfully");
-          }
-        }
-        vp.recordedChunks.length = 0;
-      })
-      .finally(() => {
-        setProcessingInProgress(false); // Reset processing state
-      });
-  }
+    if (onRecordingStop) await onRecordingStop(vp.recordedChunks, vp.recordingStartTime);
+    vp.recordedChunks.length = 0; // Clear recorded chunks
+  }, [onRecordingStop, recordingInProgress, recordingOnServer, toast]);
 
-  const toast = useToast();
+  /**
+   * Effect for starting or stopping recording based on the recording state.
+   */
+  useEffect(() => {
+    if (isRecording && !recordingInProgress) {
+      startRecording();
+    } else if (!isRecording && recordingInProgress) {
+      stopRecording();
+    }
+  }, [isRecording, recordingInProgress, startRecording, stopRecording]);
 
   return (
     <>
-      <RecordButton
-        isRecording={recordingInProgress}
-        isDisabled={processingInProgress || !directoryHandle}
-        onClick={handleRecord}
-      />
-      {device ? (
-        <Preview
-          stream={videoProcessorRef.current.stream}
-          canvasRef={canvasRef}
-          aspectRatio={resolution.width / resolution.height}
-          height={height}
-        />
-      ) : (
-        <NoPreview aspectRatio={resolution.width / resolution.height} height={height}>
-          No camera selected
+      {videoStream === undefined ? (
+        <NoPreview>
+          <VideoText text="No camera selected" />
         </NoPreview>
+      ) : (
+        <Preview
+          stream={videoStream}
+          canvasRef={canvasRef}
+          overlayColor={isProcessing ? "whiteAlpha.500" : "transparent"}
+        >
+          {isProcessing ? <VideoText text="Processing in progress..." spinner={true} /> : null}
+        </Preview>
       )}
-      <CameraSettings
-        videoTrack={videoTrack || null}
-        handLandmarker={handLandmarkerRef.current!}
-        onResolutionChange={setResolution}
-      />
     </>
   );
 }

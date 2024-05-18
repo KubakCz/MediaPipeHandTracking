@@ -2,8 +2,8 @@ import { HandLandmarkerResult } from "@mediapipe/tasks-vision";
 import { drawConnectors, drawLandmarks } from "@mediapipe/drawing_utils";
 import { HAND_CONNECTIONS } from "@mediapipe/hands";
 
-const baseColor = "#FF0000";
-const inverseColor = "#00FF00";
+const baseColor = "#F01010";
+const inverseColor = "#10F010";
 
 const baseHeight = 480;
 
