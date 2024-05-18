@@ -1,12 +1,12 @@
-import { FilesetResolver, HandLandmarker, HandLandmarkerResult } from "@mediapipe/tasks-vision";
-import { getDecoderConfig } from "../CameraPreview/VideoSettings";
-import * as messages from "./HandLandmarkerMessages";
+// Worker script for asynchronous processing of video frames by HandLandmarker.
 
-// Worker for asynchronous processing of video frames by HandLandmarker.
+import { FilesetResolver, HandLandmarker, HandLandmarkerResult } from "@mediapipe/tasks-vision";
+import { getDecoderConfig } from "../CameraPreview/video/videoSettings";
+import * as messages from "./handLandmarkerMessages";
 
 let handLandmarker: HandLandmarker;
-let lastTimeStamp: number = 0;
-let numHands: number = 2;
+let lastTimestamp: number = 0; // Timestamp of the last processed frame
+let numHands: number = 2; // Number of hands to track
 
 /**
  * Handle incoming messages from the main thread.
@@ -120,12 +120,12 @@ async function handleFrame(frame: VideoFrame): Promise<messages.FrameResponse> {
   }
 
   // Reset the HandLandmarker if the frame is out of order
-  if (frame.timestamp <= lastTimeStamp) {
+  if (frame.timestamp <= lastTimestamp) {
     await resetHandLandmarker();
   }
 
   // Process the frame
-  lastTimeStamp = frame.timestamp;
+  lastTimestamp = frame.timestamp;
   const result = handLandmarker.detectForVideo(frame, frame.timestamp);
   return new messages.FrameResponse(messages.Result.Ok, result);
 }
@@ -151,7 +151,7 @@ async function handleVideo(videoData: EncodedVideoChunk[]): Promise<messages.Vid
   const handData: { timestamp: number; data: HandLandmarkerResult }[] = [];
   const videoDecoder = new VideoDecoder({
     output: (frame) => {
-      lastTimeStamp = frame.timestamp;
+      lastTimestamp = frame.timestamp;
       const result = handLandmarker.detectForVideo(frame, frame.timestamp);
       handData.push({ timestamp: frame.timestamp, data: result });
       frame.close();

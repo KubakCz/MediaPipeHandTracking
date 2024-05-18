@@ -1,9 +1,9 @@
-// Definitions of messages that can be sent to and from the HandLandmarker worker
+// Definitions of messages that can be sent to and from the HandLandmarker worker.
 
 import { HandLandmarkerResult } from "@mediapipe/tasks-vision";
 
 /**
- * Enum representing possible results of operations.
+ * Possible results of operations.
  */
 export enum Result {
   Ok,
@@ -13,6 +13,11 @@ export enum Result {
   UnknownOperation,
 }
 
+/**
+ * Possible types of messages that can be sent to and from the HandLandmarker worker.
+ * Messages are sent to the worker, and responses are sent back to the main thread.
+ * MessageType is used to determine the type of message being sent, as the type of the message object is lost when sending it to and from a worker.
+ */
 export enum MessageType {
   BaseMessage,
   BaseResponse,
@@ -152,7 +157,7 @@ export class VideoMessage extends HandLandmarkerMessage {
  */
 export class VideoResponse extends HandLandmarkerResponse {
   type = MessageType.VideoResponse;
-  
+
   /**
    * @param result - The result of the operation.
    * @param data - Optional array of data about the hands detected in each frame of the video.
