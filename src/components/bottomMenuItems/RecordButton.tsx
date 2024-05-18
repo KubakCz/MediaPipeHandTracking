@@ -1,12 +1,18 @@
 import { Button, Text } from "@chakra-ui/react";
 import { PiRecordFill } from "react-icons/pi";
 
-/**
- * Props for the RecordButton component.
- */
 interface RecordButtonProps {
+  /**
+   * Whether the button is in recording state.
+   */
   isRecording: boolean;
+  /**
+   * If true, the button is disabled.
+   */
   isDisabled?: boolean;
+  /**
+   * Callback when the button is clicked.
+   */
   onClick?: () => void;
 }
 

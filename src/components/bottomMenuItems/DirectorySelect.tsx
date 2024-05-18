@@ -1,14 +1,28 @@
-import { Button, HStack, Input, VStack } from "@chakra-ui/react";
+import { Button, HStack, Input, VStack, Text } from "@chakra-ui/react";
 
 interface DirectorySelectProps {
+  /**
+   * The selected directory handle.
+   */
   directoryHandle: FileSystemDirectoryHandle | undefined;
+  /**
+   * Callback when a directory is selected.
+   * @param directoryHandle New directory handle.
+   * @param error Error that occurred during directory selection.
+   */
   onDirectorySelect: (
     directoryHandle: FileSystemDirectoryHandle | undefined,
     error?: Error
   ) => void;
+  /**
+   * If true, the directory selection is disabled.
+   */
   isDisabled?: boolean;
 }
 
+/**
+ * Component for selecting a video and hand data destination directory.
+ */
 export default function DirectorySelect({
   directoryHandle,
   onDirectorySelect,
@@ -37,7 +51,7 @@ export default function DirectorySelect({
 
   return (
     <VStack alignItems="flex-start">
-      <p>Destination directory:</p>
+      <Text>Destination directory:</Text>
       <HStack>
         <Input
           placeholder="Select a directory"
