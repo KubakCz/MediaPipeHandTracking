@@ -1,9 +1,9 @@
 import { FileSystemWritableFileStreamTarget, Muxer } from "webm-muxer";
-import { getEncoderConfig, getMuxerOptions } from "./VideoSettings";
+import { getEncoderConfig, getMuxerOptions } from "./videoSettings";
 import { dateTimeString } from "../utils/dateTimeFormat";
 
 /**
- * Class for processing video frames and recording them to a file.
+ * Class for processing video frames and recording them into a file.
  */
 export class VideoProcessor {
   // Processing
@@ -21,26 +21,44 @@ export class VideoProcessor {
 
   // #region Getters
 
+  /**
+   * Video stream being processed.
+   */
   public get stream(): MediaStreamTrack | null {
     return this._videoTrack;
   }
 
+  /**
+   * Whether the processor is currently processing (has a video track to read from).
+   */
   public get isProcessing(): boolean {
     return this._videoTrack !== null;
   }
 
+  /**
+   * Whether the processor is currently recording video frames.
+   */
   public get isRecording(): boolean {
     return this._isRecording;
   }
 
+  /**
+   * Time when the recording started.
+   */
   public get recordingStartTime(): number {
     return this._recordingStartTime;
   }
 
+  /**
+   * Number of frames processed from the recording start.
+   */
   public get frameCount(): number {
     return this._frameCount;
   }
 
+  /**
+   * Recorded video chunks.
+   */
   public get recordedChunks(): EncodedVideoChunk[] {
     return this._recordedChunks;
   }
