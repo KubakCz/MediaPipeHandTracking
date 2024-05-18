@@ -31,7 +31,6 @@ export default function ConnectionSettings() {
    * @returns {boolean} - True if all connection settings are valid, false otherwise.
    */
   function allValid(): boolean {
-    console.log(localIP, serverIP, commandPort, dataPort);
     return localIP !== null && serverIP !== null && commandPort !== null && dataPort !== null;
   }
 
