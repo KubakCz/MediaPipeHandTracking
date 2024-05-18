@@ -26,35 +26,14 @@ export default function RightMenu({
   onResolutionChange,
 }: RightMenuProps) {
   return (
-    <Accordion allowToggle width="400px">
-      <AccordionItem>
-        <AccordionButton>
-          <Box as="span" flex="1" textAlign="left">
-            <Heading fontSize="18pt">Motive Connection</Heading>
-          </Box>
-          <AccordionIcon />
-        </AccordionButton>
-        <AccordionPanel pb="4">
-          <ConnectionSettings />
-        </AccordionPanel>
-      </AccordionItem>
-      <AccordionItem></AccordionItem>
-      <AccordionItem>
-        <AccordionButton>
-          <Box as="span" flex="1" textAlign="left">
-            <Heading fontSize="18pt">Camera Settings</Heading>
-          </Box>
-          <AccordionIcon />
-        </AccordionButton>
-        <AccordionPanel pb="4">
-          <CameraSettings
-            videoTrack={videoTrack || null}
-            handLandmarker={handLandmarker}
-            onResolutionChange={onResolutionChange}
-            isDisabled={isDisabled}
-          />
-        </AccordionPanel>
-      </AccordionItem>
+    <Accordion allowToggle width="360px">
+      <ConnectionSettings />
+      <CameraSettings
+        videoTrack={videoTrack || null}
+        handLandmarker={handLandmarker}
+        onResolutionChange={onResolutionChange}
+        isDisabled={isDisabled}
+      />
     </Accordion>
   );
 }

@@ -2,9 +2,11 @@ import { useEffect, useState } from "react";
 import IPInput from "./Components/IPInput";
 import PortInput from "./Components/PortInput";
 import { ConnectionType, ConnectionSettings } from "../requests/models";
-import { Button, Text, Select, Spinner, VStack, useToast } from "@chakra-ui/react";
+import { Button, Text, Select, Spinner, VStack, useToast, Icon } from "@chakra-ui/react";
 import * as requests from "../requests/requests";
 import SettingsDropdown from "./Components/SettingsDropdown";
+import AccordionMenuItem from "./Components/AccordionMenuItem";
+import { IoCheckmarkCircle, IoCloseCircle } from "react-icons/io5";
 
 /**
  * Connection settings form component.
@@ -132,8 +134,16 @@ export default function ConnectionSettings() {
   console.log("ConnectionSettings rendered", connectingInProgress, allValid());
 
   return (
-    <VStack alignItems="stretch" textAlign="left" gap="2">
-      <p>{isConnected ? "Connected to NatNet server" : "Not connected to NatNetServer"}</p>
+    <AccordionMenuItem
+      label="Motive Connection"
+      icon={
+        isConnected ? (
+          <Icon as={IoCheckmarkCircle} boxSize={30} color="brand.400" />
+        ) : (
+          <Icon as={IoCloseCircle} boxSize={30} color="red.600" />
+        )
+      }
+    >
       <IPInput label="Local IP" value={localIP} onChange={setLocalIP} />
       <IPInput label="Server IP" value={serverIP} onChange={setServerIP} />
       <PortInput label="Command Port" value={commandPort} onChange={setCommandPort} />
@@ -152,6 +162,6 @@ export default function ConnectionSettings() {
       >
         {connectingInProgress ? <Spinner /> : "Connect"}
       </Button>
-    </VStack>
+    </AccordionMenuItem>
   );
 }

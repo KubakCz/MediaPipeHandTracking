@@ -1,13 +1,14 @@
 import { useEffect, useState } from "react";
 import { CameraCapabilities } from "../utils/cameraCapabilities";
-import SettingsSwitch from "./Components/SettingSwitch";
 import SettingSlider from "./Components/SettingSlider";
 import SettingsDropdown from "./Components/SettingsDropdown";
 import { RESOLUTIONS, Resolution } from "../utils/resolution";
 import { HandLandmarker } from "../HandLandmarker/HandLandmarker";
-import { VStack } from "@chakra-ui/react";
+import { Icon, VStack } from "@chakra-ui/react";
 import SettingsCategory from "./Components/SettingsCategory";
 import TwoWaySwitch from "./Components/TwoWaySwitch";
+import AccordionMenuItem from "./Components/AccordionMenuItem";
+import { MdVideoCameraBack } from "react-icons/md";
 
 /**
  * Properties for the camera settings form.
@@ -377,7 +378,12 @@ export default function CameraSettings({
 
   // #region Return
   return (
-    <VStack alignItems="left" w="100%">
+    <AccordionMenuItem
+      label="Camera Settings"
+      icon={
+        <Icon as={MdVideoCameraBack} boxSize={30} color={videoTrack ? "brand.400" : "red.600"} />
+      }
+    >
       <VStack alignItems="stretch" my={2}>
         <TwoWaySwitch
           labelFalse="Track One Hand"
@@ -455,7 +461,7 @@ export default function CameraSettings({
 
       <SettingsCategory
         name="White Balance"
-        autoLabel={"Auto White Balance"}
+        autoLabel={"Auto WB"}
         autoValue={autoWhiteBalance}
         isDisabled={isAutoWhiteBalanceDisabled || isDisabled}
         onAutoChange={handleAutoWhiteBalanceChange}
@@ -518,7 +524,7 @@ export default function CameraSettings({
           onChange={handleSharpnessChange}
         />
       </SettingsCategory>
-    </VStack>
+    </AccordionMenuItem>
   );
   // #endregion Return
 }
