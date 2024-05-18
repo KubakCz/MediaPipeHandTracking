@@ -1,3 +1,7 @@
+/**
+ * Capabilities, that can be supported by the camera.
+ * These names are used to set and get the camera capabilities.
+ */
 export enum CameraCapabilities {
   ExposureMode = "exposureMode",
   ExposureTime = "exposureTime",

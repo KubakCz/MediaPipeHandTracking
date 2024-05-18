@@ -1,9 +1,18 @@
 /**
- * Represents a resolution in pixels.
+ * Class representing resolution in pixels.
  */
 export class Resolution {
+  /**
+   * Width in pixels.
+   */
   width: number;
+  /**
+   * Height in pixels.
+   */
   height: number;
+  /**
+   * Aspect ratio in the form of "width:height".
+   */
   ratio: string;
 
   constructor(width: number, height: number) {
@@ -26,6 +35,9 @@ export class Resolution {
   }
 }
 
+/**
+ * List of common resolutions.
+ */
 export const RESOLUTIONS = [
   new Resolution(3840, 2160), // 2160p (4K UHD) 16:9
   new Resolution(2560, 1440), // 1440p (2K) 16:9
