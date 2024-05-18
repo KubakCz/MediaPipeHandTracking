@@ -41,14 +41,14 @@ export default function App() {
     console.log("Initializing HandLandmarker");
     // Initialize handLandmarker
     handLandmarkerRef.current = new HandLandmarker(
-      new Worker(new URL("HandLandmarker/HandLandmarkerWorker.ts", import.meta.url))
+      new Worker(new URL("handLandmarker/handLandmarkerWorker.ts", import.meta.url))
     );
     handLandmarkerRef.current
       .init()
       .then(() => {
         console.log("HandLandmarker initialized");
       })
-      .catch((error) => {
+      .catch((error: any) => {
         console.error("Error initializing HandLandmarker", error);
         window.alert(
           "Error initializing HandLandmarker. Please reload the page. You can find more information in the console."
