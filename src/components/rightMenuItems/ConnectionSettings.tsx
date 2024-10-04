@@ -1,7 +1,8 @@
 import { useEffect, useState } from "react";
 import { Button, Spinner, useToast, Icon } from "@chakra-ui/react";
 import { IoCheckmarkCircle, IoCloseCircle } from "react-icons/io5";
-import { ConnectionType, ConnectionSettings } from "../../app/requests/models";
+import type { ConnectionSettings } from "../../app/requests/models"
+import { ConnectionType } from "../../app/requests/models";
 import * as requests from "../../app/requests/requests";
 import AccordionMenuItem from "./AccordionMenuItem";
 import { IPInput, PortInput, SettingsDropdown } from "./input";
