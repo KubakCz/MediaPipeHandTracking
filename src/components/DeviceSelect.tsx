@@ -23,21 +23,32 @@ export default function DeviceSelect({ isDisabled, onDeviceChange }: DeviceSelec
    * Update the list of available devices.
    */
   async function updateDevices() {
-    // Get all video devices
-    const allDevices = await navigator.mediaDevices.enumerateDevices();
-    const videoDevices = allDevices
-      .filter((device) => device.kind === "videoinput")
-      .map((device) => device as InputDeviceInfo)
-      .sort((a, b) => a.deviceId.localeCompare(b.deviceId));
+    try {
+      // Request camera permission
+      await navigator.mediaDevices.getUserMedia({ video: true });
 
-    // Update devices only if the list has changed
-    if (videoDevices.length !== devices.length) {
-      setDevices(videoDevices);
-    } else {
-      const oldDeviceIds = devices.map((device) => device.deviceId);
-      const newDeviceIds = videoDevices.map((device) => device.deviceId);
-      if (oldDeviceIds.every((id, i) => id === newDeviceIds[i])) return; // No change
-      setDevices(videoDevices);
+      // Get all video devices
+      console.log("Updating devices");
+      const allDevices = await navigator.mediaDevices.enumerateDevices();
+      const videoDevices = allDevices
+        .filter((device) => device.kind === "videoinput")
+        .map((device) => device as InputDeviceInfo)
+        .sort((a, b) => a.deviceId.localeCompare(b.deviceId));
+      console.log("Devices: ", videoDevices);
+
+      // Update devices only if the list has changed
+      if (videoDevices.length !== devices.length) {
+        console.log("Setting devices");
+        setDevices(videoDevices);
+      } else {
+        const oldDeviceIds = devices.map((device) => device.deviceId);
+        const newDeviceIds = videoDevices.map((device) => device.deviceId);
+        if (oldDeviceIds.every((id, i) => id === newDeviceIds[i])) return; // No change
+        console.log("Setting devices 2");
+        setDevices(videoDevices);
+      }
+    } catch (error) {
+      console.error("Error accessing media devices.", error);
     }
   }
 
@@ -53,7 +64,7 @@ export default function DeviceSelect({ isDisabled, onDeviceChange }: DeviceSelec
     <>
       <Select
         onChange={handleDeviceChange}
-        onMouseEnter={updateDevices} // Update is called on mouse enter, so the list is up-to-date when the user clicks
+        onClick={updateDevices}
         isDisabled={isDisabled}
         variant="outline"
         placeholder="Select camera source"
