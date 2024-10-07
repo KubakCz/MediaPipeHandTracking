@@ -15,6 +15,7 @@ app.get('*', (req, res) => {
 
 // Start the server
 app.listen(PORT, () => {
+    console.log('Hand Capture Brobot v.1.0.0 (7.10.2024)');
     console.log(`Server is running at http://localhost:${PORT}`);
     exec(`start http://localhost:${PORT}`);
 });
