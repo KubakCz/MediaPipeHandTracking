@@ -90,7 +90,7 @@ export default function ConnectionSettings() {
    * Effect hook to get the connection settings when the component mounts.
    */
   useEffect(() => {
-    console.log("ConnectionSettings mounted");
+    // console.log("ConnectionSettings mounted");
     setConnectingInProgress(true);
     // Try to get the connection settings to currently connected NatNet server
     requests
@@ -125,11 +125,11 @@ export default function ConnectionSettings() {
       })
       .finally(() => {
         setConnectingInProgress(false);
-        console.log("ConnectionSettings unmounted");
+        // console.log("ConnectionSettings unmounted");
       });
   }, []);
 
-  console.log("ConnectionSettings rendered", connectingInProgress, allValid());
+  // console.log("ConnectionSettings rendered", connectingInProgress, allValid());
 
   return (
     <AccordionMenuItem

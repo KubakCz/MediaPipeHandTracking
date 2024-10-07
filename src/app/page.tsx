@@ -76,10 +76,10 @@ export default function App() {
     const maxHeight = deviceCapabilities.height?.max || 720;
     const constraints: MediaStreamConstraints = {
       video: {
-        deviceId: selectedDevice.deviceId,
-        width: 1920 <= maxWidth ? 1920 : 1280, // Use 1080p if available, otherwise 720p
-        height: 1080 <= maxHeight ? 1080 : 720,
-        frameRate: maxFps, // Use the highest possible frame rate
+        deviceId: { exact: selectedDevice.deviceId },
+        width: { ideal: 1920 <= maxWidth ? 1920 : 1280 }, // Use 1080p if available, otherwise 720p
+        height: { ideal: 1080 <= maxHeight ? 1080 : 720 },
+        frameRate: { ideal: maxFps }, // Use the highest possible frame rate
       },
     };
     navigator.mediaDevices
